@@ -10,18 +10,30 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
 import kotlin.math.cos
 import javax.swing.WindowConstants
+import kotlin.math.ln
+import kotlin.math.min
 import kotlin.math.sin
+import kotlin.random.Random
 
 fun main() {
-	createWindow("pf-2021-viz")
+	val content = listOf(
+		Pair(0.4F, "text1"), Pair(0.2F, "text2"), Pair(0.1F, "text3")
+	)
+	createWindow("pf-2021-viz", Diagram.BAR_CHART, content)
+	createWindow("pf-2021-viz", Diagram.CIRCLE, content)
+
 }
 
-fun createWindow(title: String) = runBlocking(Dispatchers.Swing) {
+enum class Diagram {
+	CIRCLE, BAR_CHART
+}
+
+fun createWindow(title: String, type: Diagram, content: List<Pair<Float, String>>) = runBlocking(Dispatchers.Swing) {
 	val window = SkiaWindow()
 	window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
 	window.title = title
 
-	window.layer.renderer = Renderer(window.layer)
+	window.layer.renderer = Renderer(window.layer, type, content)
 	window.layer.addMouseMotionListener(MyMouseMotionAdapter)
 
 	window.preferredSize = Dimension(800, 600)
@@ -31,28 +43,19 @@ fun createWindow(title: String) = runBlocking(Dispatchers.Swing) {
 	window.isVisible = true
 }
 
-class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
+class Renderer(
+	private val layer: SkiaLayer,
+	private val type: Diagram,
+	private val content: List<Pair<Float, String>>
+) : SkiaRenderer {
 	private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
 	private val font = Font(typeface, 15f)
+	private val bigFont = Font(typeface, 20f)
 	private val paint = Paint().apply {
-		color = 0xff9BC730L.toInt()
+		color = 0xff000000.toInt()
 		mode = PaintMode.FILL
 		strokeWidth = 1f
 	}
-
-	private val colors = mapOf(
-		"yellow" to Paint().apply {
-			color = 0xFFE4FF01.toInt()
-		},
-		"red" to Paint().apply {
-			color = 0xFFFF0000.toInt()
-		},
-		"blue" to Paint().apply {
-			color = 0xFF78CAD2.toInt()
-		},
-		"gray" to Paint().apply {
-			color = 0xFF7C8483.toInt()
-		})
 
 	private val stroke = Paint().apply {
 		color = 0xFF000000.toInt()
@@ -60,9 +63,8 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 		strokeWidth = 2f
 	}
 
-	private fun colorByText(text : String) = Paint().apply {
-		val hash = text.hashCode()
-		color = 0xFF000000.toInt() + (hash * hash * hash) % 0x1000000
+	private fun randomColor(seed: Float) = Paint().apply {
+		color = 0xFF000000.toInt() + Random((ln(seed) * 1000).toInt()).nextInt() % 0x1000000
 	}
 
 	override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
@@ -71,16 +73,12 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 		val w = (width / contentScale).toInt()
 		val h = (height / contentScale).toInt()
 
-		separatedCircle(
-			canvas, w / 2F, h / 2F, minOf(w / 2F, h / 2F) - 35f,
-			listOf(
-				Pair(0.5F, "text1"), Pair(0.1F, "text2"),
-				Pair(1F, "text3"), Pair(1F, "text4"),
-				Pair(1F, "text7"), Pair(1F, "text6"),
-				Pair(1F, "text5")
-			)
-		)
-
+		when (type) {
+			Diagram.BAR_CHART ->
+				barChart(canvas, w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F, content)
+			Diagram.CIRCLE ->
+				separatedCircle(canvas, w / 2F, h / 2F, min(w / 2F, h / 2F) - 30F, content)
+		}
 		layer.needRedraw()
 	}
 
@@ -90,20 +88,26 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 		assert(content.sumOf { it.first.toDouble() } <= 2F * Math.PI.toFloat())
 		val otherAngle = 2F * Math.PI.toFloat() - content.sumOf { it.first.toDouble() }.toFloat()
 		val fullContent = content + Pair(otherAngle, "other")
-		canvas.drawCircle(centerX, centerY, r, colors.getValue("gray"))
 		var angle = 0F
 		lineInCircle(canvas, centerX, centerY, r, angle)
 		fullContent.forEach {
+			val sweepAngle = it.first
+			val text = "${it.second} - ${(100 * sweepAngle / Math.PI / 2F).toInt()}%"
 			val prevAngle = angle
-			angle += it.first
-			canvas.drawArc(centerX - r, centerY - r, centerX + r, centerY + r,
-				toDegree(prevAngle) - 90F, toDegree(it.first), true, colorByText(it.second))
+			angle += sweepAngle
+			canvas.drawArc(
+				centerX - r, centerY - r, centerX + r, centerY + r,
+				toDegree(prevAngle) - 90F, toDegree(sweepAngle), true, randomColor(sweepAngle)
+			)
 			val angleForText = (prevAngle + angle) / 2
-			val xForText = if (angleForText < Math.PI.toFloat()) centerX + (r + 15F) * sin(angleForText) else
-				centerX + (r + 15F) * sin(angleForText) - font.size * 0.6F * it.second.length
 			val yForText = centerY - (r + 15F) * cos(angleForText)
-			canvas.drawString(it.second, xForText, yForText, font, paint)
+			val xForText = if (sin(angleForText) > 0)
+				centerX + (r + 15F) * sin(angleForText)
+			else
+				centerX + (r + 15F) * sin(angleForText) - font.size * 0.6F * text.length
+			canvas.drawString(text, xForText, yForText, font, paint)
 		}
+		canvas.drawCircle(centerX, centerY, r, stroke)
 		angle = 0F
 		fullContent.forEach {
 			angle += it.first
@@ -120,6 +124,39 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 			centerY - length * cos(angle),
 			stroke
 		)
+	}
+
+	private fun barChart(
+		canvas: Canvas, left: Float, top: Float, right: Float, bottom: Float, content: List<Pair<Float, String>>
+	) {
+		assert(content.sumOf { it.first.toDouble() } <= 1F)
+		val otherAngle = 1F - content.sumOf { it.first.toDouble() }.toFloat()
+		val fullContent = content + Pair(otherAngle, "other")
+		// widthOfColumn * cnt + widthOfColumn / 2 * (cnt - 1) = width
+		val widthOfColumn = (right - left) / (1.5F * fullContent.size - 0.5F)
+		val forText = fullContent.size * bigFont.size + 10F
+		val height = (bottom - font.size - 5F - (top + forText)) / fullContent.maxOf { it.first }
+		var currX = left
+		fullContent.withIndex().forEach {
+			val value = it.value.first
+			val index = it.index
+			val rect = Rect(
+				currX,
+				bottom - font.size - 5F - height * value,
+				currX + widthOfColumn,
+				bottom - font.size - 5F
+			)
+			canvas.drawRect(rect, randomColor(value))
+			canvas.drawRect(rect, stroke)
+			canvas.drawString("${index + 1}", currX + widthOfColumn / 2, bottom - 2F, font, paint)
+			currX += 1.5F * widthOfColumn
+		}
+		fullContent.withIndex().forEach {
+			val index = it.index + 1
+			val text = it.value.second
+			val percent = (it.value.first * 100F).toInt()
+			canvas.drawString("$index. $text - ${percent}%", left + 3F, top + index * bigFont.size, bigFont, paint)
+		}
 	}
 }
 
