@@ -5,38 +5,47 @@ import org.jetbrains.skija.*
 import org.jetbrains.skiko.SkiaLayer
 import org.jetbrains.skiko.SkiaRenderer
 import org.jetbrains.skiko.SkiaWindow
-import org.jetbrains.skiko.orderEmojiAndSymbolsPopup
 import java.awt.Dimension
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
+import java.awt.event.*
 import javax.swing.WindowConstants
 import kotlin.math.*
 import kotlin.random.Random
 
 fun main() {
 	val content = listOf(
-		Pair(100f, "text1"), Pair(64f, "text2"), Pair(127f, "text3"), Pair(1000f, "text4")
+		ChartCell(100f, "text1"),
+		ChartCell(64f, "text2"),
+		ChartCell(127f, "text3"),
+		ChartCell(1000f, "text4")
 	)
 	val intContent = listOf(
-		Pair(1f, 1f), Pair(0f, 2f), Pair(3f, 5f)
+		PlotCell(1f, 1f, "text1"), PlotCell(5f, 5f, "text2"), PlotCell(1f, 5f, "text3"),
+		PlotCell(5f, 1f, "text4")
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
-//	createWindow("bar chart", Diagram.BAR_CHART, content)
-//	createWindow("circle", Diagram.CIRCLE, content)
+	createWindow("bar chart", Diagram.BAR_CHART, content)
+	createWindow("circle", Diagram.CIRCLE, content)
 
 }
+
+open class Cell
+
+class PlotCell(val x: Float, val y: Float, val text: String) : Cell()
+
+class ChartCell(val value: Float, val text: String) : Cell()
 
 enum class Diagram {
 	CIRCLE, BAR_CHART, PLOT
 }
 
-fun createWindow(title: String, type: Diagram, content: List<Pair<Float, Any>>) = runBlocking(Dispatchers.Swing) {
+fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
 	val window = SkiaWindow()
 	window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
 	window.title = title
 
 	window.layer.renderer = Renderer(window.layer, type, content)
 	window.layer.addMouseMotionListener(MyMouseMotionAdapter)
+	window.layer.addMouseWheelListener(MyMouseWheelListener)
 
 	window.preferredSize = Dimension(800, 600)
 	window.minimumSize = Dimension(100, 100)
@@ -48,7 +57,7 @@ fun createWindow(title: String, type: Diagram, content: List<Pair<Float, Any>>) 
 class Renderer(
 	private val layer: SkiaLayer,
 	private val type: Diagram,
-	private val content: List<Pair<Float, Any>>
+	private val content: List<Cell>
 ) : SkiaRenderer {
 	private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
 	private val font = Font(typeface, 15f)
@@ -82,31 +91,19 @@ class Renderer(
 
 		assert(content.isNotEmpty())
 		when (type) {
-			Diagram.BAR_CHART -> {
-				content.forEach {
-					assert(it.second is String)
-				}
-				barChart(
-					canvas, w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F,
-					content.map { Pair(it.first, it.second as String) }
-				)
-			}
-			Diagram.CIRCLE -> {
-				content.forEach {
-					assert(it.second is String)
-				}
-				separatedCircle(
-					canvas, w / 2F, h / 2F, min(w / 2F, h / 2F) - 30F,
-					content.map { Pair(it.first, it.second as String) }
-				)
-			}
+			Diagram.BAR_CHART -> barChart(
+				canvas, w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F,
+				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") }
+			)
+			Diagram.CIRCLE -> separatedCircle(
+				canvas, w / 2F, h / 2F, min(w / 2F, h / 2F) - 30F,
+				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") }
+			)
+
 			Diagram.PLOT -> {
-				content.forEach {
-					assert(it.second is Int)
-				}
 				plot(
 					canvas, w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F,
-					content.map { Pair(it.first, it.second as Float) }
+					content.map { it as? PlotCell ?: throw IllegalArgumentException("Wrong type for content") }
 				)
 			}
 		}
@@ -114,20 +111,20 @@ class Renderer(
 	}
 
 	private fun separatedCircle(
-		canvas: Canvas, centerX: Float, centerY: Float, r: Float, content: List<Pair<Float, String>>
+		canvas: Canvas, centerX: Float, centerY: Float, r: Float, content: List<ChartCell>
 	) {
-		assert(content.all { it.first >= 0 })
-		val sum = content.sumOf { it.first.toDouble() }.toFloat()
+		assert(content.all { it.value >= 0 })
+		val sum = content.sumOf { it.value.toDouble() }.toFloat()
 		var angle = 0F
 		lineInCircle(canvas, centerX, centerY, r, angle)
 		content.forEach {
-			val sweepAngle = it.first / sum * Math.PI.toFloat() * 2
-			val text = "${it.second} - ${it.first} (${(it.first / sum * 100).toInt()}%)"
+			val sweepAngle = it.value / sum * Math.PI.toFloat() * 2
+			val text = "${it.text} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
 			val prevAngle = angle
 			angle += sweepAngle
 			canvas.drawArc(
 				centerX - r, centerY - r, centerX + r, centerY + r,
-				toDegree(prevAngle) - 90F, toDegree(sweepAngle), true, randomColor(it.first)
+				toDegree(prevAngle) - 90F, toDegree(sweepAngle), true, randomColor(it.value)
 			)
 			val angleForText = (prevAngle + angle) / 2
 			val yForText = centerY - (r + 15F) * cos(angleForText)
@@ -140,7 +137,7 @@ class Renderer(
 		canvas.drawCircle(centerX, centerY, r, stroke)
 		angle = 0F
 		content.forEach {
-			angle += it.first / sum * Math.PI.toFloat() * 2
+			angle += it.value / sum * Math.PI.toFloat() * 2
 			lineInCircle(canvas, centerX, centerY, r, angle)
 		}
 	}
@@ -157,10 +154,10 @@ class Renderer(
 	}
 
 	private fun barChart(
-		canvas: Canvas, left: Float, top: Float, right: Float, bottom: Float, content: List<Pair<Float, String>>
+		canvas: Canvas, left: Float, top: Float, right: Float, bottom: Float, content: List<ChartCell>
 	) {
-		assert(content.all { it.first >= 0 })
-		val max = content.maxOf { it.first }
+		assert(content.all { it.value >= 0 })
+		val max = content.maxOf { it.value }
 		val leftIndent = 80f
 		// widthOfColumn * cnt + widthOfColumn / 2 * (cnt - 1) = width
 		val widthOfColumn = (right - (left + leftIndent)) / (1.5F * content.size - 0.5F)
@@ -192,12 +189,12 @@ class Renderer(
 		bottom: Float,
 		widthOfColumn: Float,
 		factor: Float,
-		content: List<Pair<Float, String>>
+		content: List<ChartCell>
 	) {
 		var currX = left
 		content.forEach {
-			val value = it.first
-			val text = it.second
+			val value = it.value
+			val text = it.text
 			val rect = Rect(
 				currX,
 				bottom - font.size - 5F - factor * value,
@@ -219,16 +216,51 @@ class Renderer(
 		State.mouseX in left..right && State.mouseY in top..bottom
 	}
 
+	private var x0 = 0f
+	private var y0 = 0f
+	private var x1 = 10f
+	private var y1 = 10f
+
+	private fun changeZoom(preciseWheelRotation: Float, mouseX: Float, mouseY: Float, h: Float, w: Float) {
+		val x = mouseX / h * (x1 - x0) + x0
+		val y = (y1 - y0) - mouseY / w * (y1 - y0) + y0
+		assert(x >= 0 && y >= 0)
+		val factor = if (preciseWheelRotation == 1f) 0.9f else 1f / 0.9f
+		x1 = x + (x1 - x) * factor
+		y1 = y + (y1 - y) * factor
+		x0 = x - (x - x0) * factor
+		y0 = y - (y - y0) * factor
+
+	}
+
+
 	private fun plot(
 		canvas: Canvas,
 		left: Float,
 		top: Float,
 		right: Float,
 		bottom: Float,
-		content: List<Pair<Float, Float>>
+		content: List<PlotCell>
 	) {
+		State.e?.let {
+			changeZoom(
+				it.preciseWheelRotation.toFloat(),
+				State.mouseX - left,
+				State.mouseY - top,
+				right - left,
+				bottom - top
+			)
+		}
+		State.e = null
+		assert(content.all { it.x >= 0 && it.y >= 0 })
 		drawArrow(canvas, left, bottom, left, top, paint)
 		drawArrow(canvas, left, bottom, right, bottom, paint)
+		content.filter { it.x in x0..x1 && it.y in y0..y1 }.forEach {
+			val x = left + (it.x - x0) / (x1 - x0) * (right - left)
+			val y = bottom - (it.y - y0) / (y1 - y0) * (bottom - top)
+			canvas.drawCircle(x, y, 5f, paint)
+			canvas.drawString(it.text, x + 5f, y + 5f, font, paint)
+		}
 	}
 
 	private fun drawArrow(canvas: Canvas, x0: Float, y0: Float, x1: Float, y1: Float, paint: Paint) {
@@ -241,7 +273,7 @@ class Renderer(
 		val rotatedVectorX = (vectorX * cos(angle) - vectorY * sin(angle)) * len / vectorLen
 		val rotatedVectorY = (vectorX * sin(angle) + vectorY * cos(angle)) * len / vectorLen
 		canvas.drawLine(x1 - rotatedVectorX, y1 - rotatedVectorY, x1, y1, paint)
-		val rotatedVectorX2 = (vectorX * cos(-	angle) - vectorY * sin(-angle)) * len / vectorLen
+		val rotatedVectorX2 = (vectorX * cos(-angle) - vectorY * sin(-angle)) * len / vectorLen
 		val rotatedVectorY2 = (vectorX * sin(-angle) + vectorY * cos(-angle)) * len / vectorLen
 		canvas.drawLine(x1 - rotatedVectorX2, y1 - rotatedVectorY2, x1, y1, paint)
 	}
@@ -250,11 +282,18 @@ class Renderer(
 object State {
 	var mouseX = 0f
 	var mouseY = 0f
+	var e: MouseWheelEvent? = null
 }
 
 object MyMouseMotionAdapter : MouseMotionAdapter() {
 	override fun mouseMoved(event: MouseEvent) {
 		State.mouseX = event.x.toFloat()
 		State.mouseY = event.y.toFloat()
+	}
+}
+
+object MyMouseWheelListener : MouseWheelListener {
+	override fun mouseWheelMoved(e: MouseWheelEvent?) {
+		State.e = e
 	}
 }
