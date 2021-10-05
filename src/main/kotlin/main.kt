@@ -23,8 +23,8 @@ fun main() {
 		PlotCell(5f, 1f, "text4")
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
-	createWindow("bar chart", Diagram.BAR_CHART, content)
-	createWindow("circle", Diagram.CIRCLE, content)
+//	createWindow("bar chart", Diagram.BAR_CHART, content)
+//	createWindow("circle", Diagram.CIRCLE, content)
 
 }
 
@@ -46,6 +46,7 @@ fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlockin
 	window.layer.renderer = Renderer(window.layer, type, content)
 	window.layer.addMouseMotionListener(MyMouseMotionAdapter)
 	window.layer.addMouseWheelListener(MyMouseWheelListener)
+	window.layer.addKeyListener(MyKeyAdapter)
 
 	window.preferredSize = Dimension(800, 600)
 	window.minimumSize = Dimension(100, 100)
@@ -61,6 +62,7 @@ class Renderer(
 ) : SkiaRenderer {
 	private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
 	private val font = Font(typeface, 15f)
+	private val thinFont = Font(typeface, 12f)
 	private val paint = Paint().apply {
 		color = 0xff000000.toInt()
 		mode = PaintMode.FILL
@@ -76,7 +78,7 @@ class Renderer(
 	private val thinStroke = Paint().apply {
 		color = 0x5F000000
 		mode = PaintMode.STROKE
-		strokeWidth = 1f
+		strokeWidth = 0.5f
 	}
 
 	private fun randomColor(seed: Float) = Paint().apply {
@@ -206,18 +208,18 @@ class Renderer(
 			canvas.drawString(
 				text, currX + widthOfColumn / 2 - text.length * font.size * 0.6F / 2F, bottom - 2F, font, paint
 			)
-			if (checkInRect(rect))
+			if (checkInRect(rect, State.mouseX, State.mouseY))
 				canvas.drawString(value.toString(), State.mouseX, State.mouseY, font, paint)
 			currX += 1.5F * widthOfColumn
 		}
 	}
 
-	private fun checkInRect(rect: Rect) = rect.run {
-		State.mouseX in left..right && State.mouseY in top..bottom
+	private fun checkInRect(rect: Rect, x: Float, y: Float) = rect.run {
+		x in left..right && y in top..bottom
 	}
 
-	private var x0 = 0f
-	private var y0 = 0f
+	private var x0 = -10f
+	private var y0 = -10f
 	private var x1 = 10f
 	private var y1 = 10f
 
@@ -225,7 +227,7 @@ class Renderer(
 		val x = mouseX / h * (x1 - x0) + x0
 		val y = (y1 - y0) - mouseY / w * (y1 - y0) + y0
 		assert(x >= 0 && y >= 0)
-		val factor = if (preciseWheelRotation == 1f) 0.9f else 1f / 0.9f
+		val factor = if (preciseWheelRotation == 1f) 0.98f else 1f / 0.98f
 		x1 = x + (x1 - x) * factor
 		y1 = y + (y1 - y) * factor
 		x0 = x - (x - x0) * factor
@@ -233,6 +235,27 @@ class Renderer(
 
 	}
 
+	private fun precessKey(code: Int) {
+		val step = (x1 - x0) / 30f
+		when (code) {
+			37 -> {
+				x0 -= step
+				x1 -= step
+			}
+			38 -> {
+				y0 += step
+				y1 += step
+			}
+			39 -> {
+				x0 += step
+				x1 += step
+			}
+			40 -> {
+				y0 -= step
+				y1 -= step
+			}
+		}
+	}
 
 	private fun plot(
 		canvas: Canvas,
@@ -252,14 +275,61 @@ class Renderer(
 			)
 		}
 		State.e = null
-		assert(content.all { it.x >= 0 && it.y >= 0 })
-		drawArrow(canvas, left, bottom, left, top, paint)
-		drawArrow(canvas, left, bottom, right, bottom, paint)
+		State.pressedKeyCode?.let {
+			precessKey(it)
+		}
+		State.pressedKeyCode = null
+		drawNet(canvas, getNearestRoundNumber((x1 - x0) / 10), left, top, right, bottom)
+		if (0f in x0..x1) {
+			val centerX = left + (-x0) / (x1 - x0) * (right - left)
+			drawArrow(canvas, centerX, bottom, centerX, top, paint)
+		}
+		if (0f in y0..y1) {
+			val centerY = bottom - (-y0) / (y1 - y0) * (bottom - top)
+			drawArrow(canvas, left, centerY, right, centerY, paint)
+		}
 		content.filter { it.x in x0..x1 && it.y in y0..y1 }.forEach {
 			val x = left + (it.x - x0) / (x1 - x0) * (right - left)
 			val y = bottom - (it.y - y0) / (y1 - y0) * (bottom - top)
 			canvas.drawCircle(x, y, 5f, paint)
 			canvas.drawString(it.text, x + 5f, y + 5f, font, paint)
+		}
+	}
+
+	private fun drawNet(canvas: Canvas, step: Float, left: Float, top: Float, right: Float, bottom: Float) {
+		for (vertical in (x0 / step).toInt() - 2..(x1 / step).toInt() + 2) {
+			if (step * vertical in x0..x1) {
+				val screenX = left + (step * vertical - x0) / (x1 - x0) * (right - left)
+				canvas.drawLine(screenX, top, screenX, bottom, thinStroke)
+				when {
+					0 < y0 -> canvas.drawString("${step * vertical}", screenX, bottom, thinFont, paint)
+					0 > y1 -> canvas.drawString(
+						"${step * vertical}", screenX, top + thinFont.size, thinFont, paint
+					)
+					else -> canvas.drawString(
+						"${step * vertical}",
+						screenX, bottom - (-y0) / (y1 - y0) * (bottom - top) - 2f, thinFont, paint
+					)
+				}
+			}
+		}
+		for (horizontal in (y0 / step).toInt() - 2..(y1 / step).toInt() + 2) {
+			if (horizontal * step in y0..y1) {
+				val screenY = bottom - (horizontal * step - y0) / (y1 - y0) * (bottom - top)
+				canvas.drawLine(left, screenY, right, screenY, thinStroke)
+				val inscription = (step * horizontal).toString()
+				when {
+					0 < x0 -> canvas.drawString(inscription, left, screenY, thinFont, paint)
+					0 > x1 -> canvas.drawString(
+						inscription, right - thinFont.size * 0.6f * inscription.length,
+						screenY, thinFont, paint
+					)
+					else -> canvas.drawString(
+						inscription, left + (-x0) / (x1 - x0) * (right - left),
+						screenY, thinFont, paint
+					)
+				}
+			}
 		}
 	}
 
@@ -277,12 +347,18 @@ class Renderer(
 		val rotatedVectorY2 = (vectorX * sin(-angle) + vectorY * cos(-angle)) * len / vectorLen
 		canvas.drawLine(x1 - rotatedVectorX2, y1 - rotatedVectorY2, x1, y1, paint)
 	}
+
+	private fun getNearestRoundNumber(value: Float): Float {
+		val roundNumbers = (-10..10).map { listOf(10f.pow(it), 10f.pow(it) * 2, 10f.pow(it) * 5) }.flatten()
+		return roundNumbers.minByOrNull { abs(it - value) } ?: 1f
+	}
 }
 
 object State {
 	var mouseX = 0f
 	var mouseY = 0f
 	var e: MouseWheelEvent? = null
+	var pressedKeyCode: Int? = null
 }
 
 object MyMouseMotionAdapter : MouseMotionAdapter() {
@@ -295,5 +371,11 @@ object MyMouseMotionAdapter : MouseMotionAdapter() {
 object MyMouseWheelListener : MouseWheelListener {
 	override fun mouseWheelMoved(e: MouseWheelEvent?) {
 		State.e = e
+	}
+}
+
+object MyKeyAdapter : KeyAdapter() {
+	override fun keyPressed(e: KeyEvent?) {
+		State.pressedKeyCode = e?.keyCode
 	}
 }
