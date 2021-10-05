@@ -19,18 +19,28 @@ fun main() {
 		ChartCell(1000f, "text4")
 	)
 	val intContent = listOf(
-		PlotCell(1f, 1f, "text1"), PlotCell(5f, 5f, "text2"), PlotCell(1f, 5f, "text3"),
-		PlotCell(5f, 1f, "text4")
+		PlotCell(1f, 1f, "text1"),
+		PlotCell(5f, 5f, "text2"),
+		PlotCell(1f, 5f, "text3"),
+		PlotCell(3f, 1f, "text4"),
+		PlotCell(0.333f, 0.333f, "text5"),
+		PlotCell(7f, -4f, "text6")
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
-	createWindow("bar chart", Diagram.BAR_CHART, content)
-	createWindow("circle", Diagram.CIRCLE, content)
+//	createWindow("bar chart", Diagram.BAR_CHART, content)
+//	createWindow("circle", Diagram.CIRCLE, content)
 
 }
 
 open class Cell
 
-class PlotCell(val x: Float, val y: Float, val text: String) : Cell()
+class PlotCell(val x: Float, val y: Float, val text: String) : Cell(), Comparable<PlotCell> {
+	override operator fun compareTo(other: PlotCell): Int = when {
+		x > other.x -> 1
+		x == other.x -> y.compareTo(other.y)
+		else -> -1
+	}
+}
 
 class ChartCell(val value: Float, val text: String) : Cell()
 
@@ -108,7 +118,7 @@ class Renderer(
 				plot(
 					canvas, w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F,
 					content.map { it as? PlotCell ?: throw IllegalArgumentException("Wrong type for content") },
-					font, paint, thinFont, thinStroke
+					font, paint, thinFont, thinStroke, PlotMode.WITH_SEGMENTS
 				)
 			}
 		}
