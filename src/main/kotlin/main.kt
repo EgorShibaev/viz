@@ -20,11 +20,7 @@ fun main() {
 	)
 	val intContent = listOf(
 		PlotCell(1f, 1f, "text1"),
-		PlotCell(5f, 5f, "text2"),
-		PlotCell(1f, 5f, "text3"),
-		PlotCell(3f, 1f, "text4"),
-		PlotCell(0.333f, 0.333f, "text5"),
-		PlotCell(7f, -4f, "text6")
+		PlotCell(1f, 10f, "text32")
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
 //	createWindow("bar chart", Diagram.BAR_CHART, content)
@@ -127,6 +123,12 @@ class Renderer(
 }
 
 object State {
+	var lastHeight = 0f
+	var lastWidth = 0f
+	var x0 = -10f
+	var y0 = -10f
+	var x1 = 10f
+	var y1 = 10f
 	var mouseX = 0f
 	var mouseY = 0f
 	var e: MouseWheelEvent? = null

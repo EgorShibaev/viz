@@ -4,41 +4,40 @@ import org.jetbrains.skija.Paint
 import org.jetbrains.skija.PaintMode
 import kotlin.math.*
 
-private var x0 = -10f
-private var y0 = -10f
-private var x1 = 10f
-private var y1 = 10f
-
 enum class PlotMode {
 	WITH_SEGMENTS, USUAL
 }
 
-fun convertPlotX(plotX: Float, left: Float, right: Float) = left + (plotX - x0) / (x1 - x0) * (right - left)
+fun convertPlotX(plotX: Float, left: Float, right: Float) =
+	left + (plotX - State.x0) / (State.x1 - State.x0) * (right - left)
 
-fun convertPlotY(plotY: Float, top: Float, bottom: Float) = bottom - (plotY - y0) / (y1 - y0) * (bottom - top)
+fun convertPlotY(plotY: Float, top: Float, bottom: Float) =
+	bottom - (plotY - State.y0) / (State.y1 - State.y0) * (bottom - top)
 
-fun convertScreenX(screenX: Float, left: Float, right: Float) = x0 + (screenX - left) / (right - left) * (x1 - x0)
+fun convertScreenX(screenX: Float, left: Float, right: Float) =
+	State.x0 + (screenX - left) / (right - left) * (State.x1 - State.x0)
 
-fun convertScreenY(screenY: Float, top: Float, bottom: Float) = y1 - (screenY - top) / (bottom - top) * (y1 - y0)
+fun convertScreenY(screenY: Float, top: Float, bottom: Float) =
+	State.y1 - (screenY - top) / (bottom - top) * (State.y1 - State.y0)
 
 private fun precessKey(code: Int) {
-	val step = (x1 - x0) / 30f
+	val step = (State.x1 - State.x0) / 30f
 	when (code) {
 		37 -> {
-			x0 -= step
-			x1 -= step
+			State.x0 -= step
+			State.x1 -= step
 		}
 		38 -> {
-			y0 += step
-			y1 += step
+			State.y0 += step
+			State.y1 += step
 		}
 		39 -> {
-			x0 += step
-			x1 += step
+			State.x0 += step
+			State.x1 += step
 		}
 		40 -> {
-			y0 -= step
-			y1 -= step
+			State.y0 -= step
+			State.y1 -= step
 		}
 	}
 }
@@ -54,11 +53,33 @@ private fun changeZoom(
 	val y = convertScreenY(State.mouseY, top, bottom)
 	assert(x >= 0 && y >= 0)
 	val factor = if (preciseWheelRotation == 1f) 0.95f else 1f / 0.95f
-	x1 = x + (x1 - x) * factor
-	y1 = y + (y1 - y) * factor
-	x0 = x - (x - x0) * factor
-	y0 = y - (y - y0) * factor
+	State.x1 = x + (State.x1 - x) * factor
+	State.y1 = y + (State.y1 - y) * factor
+	State.x0 = x - (x - State.x0) * factor
+	State.y0 = y - (y - State.y0) * factor
 
+}
+
+private fun initField(content: List<PlotCell>, left: Float, top: Float, right: Float, bottom: Float) {
+	State.x0 = content.minOf { it.x } - 1
+	State.x1 = content.maxOf { it.x } + 1
+	State.y0 = content.minOf { it.y } - 1
+	State.y1 = content.maxOf { it.y } + 1
+	// height / (bottom - left) should be equal width / (right - left)
+	val height = State.y1 - State.y0
+	val width = State.x1 - State.x0
+	when {
+		height / (bottom - left) < width / (right - left) -> {
+			val expectedHeight = width / (right - left) * (bottom - left)
+			State.y0 -= (expectedHeight - height) / 2
+			State.y1 + (expectedHeight - height) / 2
+		}
+		else -> {
+			val expectedWidth = height / (bottom - top) * (right - left)
+			State.x0 -= (expectedWidth - width) / 2
+			State.x1 += (expectedWidth - width) / 2
+		}
+	}
 }
 
 fun plot(
@@ -74,6 +95,11 @@ fun plot(
 	thinStroke: Paint,
 	plotMode: PlotMode
 ) {
+	if (right - left != State.lastWidth || bottom - top != State.lastHeight) {
+		initField(content, left, top, right, bottom)
+		State.lastWidth = right - left
+		State.lastHeight = bottom - top
+	}
 	State.e?.let {
 		changeZoom(it.preciseWheelRotation.toFloat(), left, top, right, bottom)
 	}
@@ -82,12 +108,22 @@ fun plot(
 		precessKey(it)
 	}
 	State.pressedKeyCode = null
-	drawNet(canvas, getNearestRoundNumber((x1 - x0) / 10), left, top, right, bottom, paint, thinStroke, thinFont)
-	if (0f in x0..x1) {
+	drawNet(
+		canvas,
+		getNearestRoundNumber((State.x1 - State.x0) / 10),
+		left,
+		top,
+		right,
+		bottom,
+		paint,
+		thinStroke,
+		thinFont
+	)
+	if (0f in State.x0..State.x1) {
 		val centerX = convertPlotX(0f, left, right)
 		drawArrow(canvas, centerX, bottom, centerX, top, paint)
 	}
-	if (0f in y0..y1) {
+	if (0f in State.y0..State.y1) {
 		val centerY = convertPlotY(0f, top, bottom)
 		drawArrow(canvas, left, centerY, right, centerY, paint)
 	}
@@ -130,7 +166,7 @@ private fun drawPoints(
 	font: Font,
 	paint: Paint
 ) {
-	content.filter { it.x in x0..x1 && it.y in y0..y1 }.forEach {
+	content.filter { it.x in State.x0..State.x1 && it.y in State.y0..State.y1 }.forEach {
 		val x = convertPlotX(it.x, left, right)
 		val y = convertPlotY(it.y, top, bottom)
 		val radius = 5f
@@ -159,13 +195,15 @@ private fun drawNet(
 	thinStroke: Paint,
 	thinFont: Font
 ) {
-	for (vertical in (x0 / step).toInt() - 2..(x1 / step).toInt() + 2) {
-		if (step * vertical in x0..x1 && (vertical != 0 || 0f !in x0..x1 || (0f in x0..x1 && 0f in y0..y1))) {
+	for (vertical in (State.x0 / step).toInt() - 2..(State.x1 / step).toInt() + 2) {
+		if (step * vertical in State.x0..State.x1 &&
+			(vertical != 0 || 0f !in State.x0..State.x1 || (0f in State.x0..State.x1 && 0f in State.y0..State.y1))
+		) {
 			val screenX = convertPlotX(step * vertical, left, right)
 			canvas.drawLine(screenX, top, screenX, bottom, thinStroke)
 			when {
-				0 < y0 -> canvas.drawString("${step * vertical}", screenX, bottom, thinFont, paint)
-				0 > y1 -> canvas.drawString(
+				0 < State.y0 -> canvas.drawString("${step * vertical}", screenX, bottom, thinFont, paint)
+				0 > State.y1 -> canvas.drawString(
 					"${step * vertical}", screenX, top + thinFont.size, thinFont, paint
 				)
 				else -> canvas.drawString(
@@ -175,14 +213,14 @@ private fun drawNet(
 			}
 		}
 	}
-	for (horizontal in (y0 / step).toInt() - 2..(y1 / step).toInt() + 2) {
-		if (horizontal * step in y0..y1 && (horizontal != 0 || 0F !in y0..y1)) {
+	for (horizontal in (State.y0 / step).toInt() - 2..(State.y1 / step).toInt() + 2) {
+		if (horizontal * step in State.y0..State.y1 && (horizontal != 0 || 0F !in State.y0..State.y1)) {
 			val screenY = convertPlotY(horizontal * step, top, bottom)
 			canvas.drawLine(left, screenY, right, screenY, thinStroke)
 			val inscription = (step * horizontal).toString()
 			when {
-				0 < x0 -> canvas.drawString(inscription, left, screenY, thinFont, paint)
-				0 > x1 -> canvas.drawString(
+				0 < State.x0 -> canvas.drawString(inscription, left, screenY, thinFont, paint)
+				0 > State.x1 -> canvas.drawString(
 					inscription, right - thinFont.size * 0.6f * inscription.length,
 					screenY, thinFont, paint
 				)
