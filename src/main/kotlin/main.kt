@@ -133,12 +133,33 @@ object State {
 	var mouseY = 0f
 	var e: MouseWheelEvent? = null
 	var pressedKeyCode: Int? = null
+	var vectorToMoveX = 0f
+	var vectorToMoveY = 0f
+	var lastDraggedX : Float? = null
+	var lastDraggedY : Float? = null
 }
 
 object MyMouseMotionAdapter : MouseMotionAdapter() {
 	override fun mouseMoved(event: MouseEvent) {
 		State.mouseX = event.x.toFloat()
 		State.mouseY = event.y.toFloat()
+	}
+
+	override fun mouseDragged(e: MouseEvent?) {
+		e?.apply {
+			val lastX = State.lastDraggedX
+			val lastY = State.lastDraggedY
+			if (lastX == null || lastY == null || abs(lastX - x) > 20f || abs(lastY - y) > 20f) {
+				State.lastDraggedX = x.toFloat()
+				State.lastDraggedY = y.toFloat()
+			}
+			else {
+				State.vectorToMoveX += x - lastX
+				State.vectorToMoveY += y - lastY
+				State.lastDraggedX = x.toFloat()
+				State.lastDraggedY = y.toFloat()
+			}
+		}
 	}
 }
 

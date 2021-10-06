@@ -82,6 +82,17 @@ private fun initField(content: List<PlotCell>, left: Float, top: Float, right: F
 	}
 }
 
+private fun moveByMouse(left: Float, top: Float, right: Float, bottom: Float) {
+	val deltaX = -State.vectorToMoveX / (right - left) * (State.x1 - State.x0)
+	val deltaY = State.vectorToMoveY / (bottom - top) * (State.y1 - State.y0)
+	State.vectorToMoveX = 0f
+	State.vectorToMoveY = 0f
+	State.x0 += deltaX
+	State.y0 += deltaY
+	State.x1 += deltaX
+	State.y1 += deltaY
+}
+
 fun plot(
 	canvas: Canvas,
 	left: Float,
@@ -95,6 +106,7 @@ fun plot(
 	thinStroke: Paint,
 	plotMode: PlotMode
 ) {
+	moveByMouse(left, top, right, bottom)
 	if (right - left != State.lastWidth || bottom - top != State.lastHeight) {
 		initField(content, left, top, right, bottom)
 		State.lastWidth = right - left
@@ -109,15 +121,8 @@ fun plot(
 	}
 	State.pressedKeyCode = null
 	drawNet(
-		canvas,
-		getNearestRoundNumber((State.x1 - State.x0) / 10),
-		left,
-		top,
-		right,
-		bottom,
-		paint,
-		thinStroke,
-		thinFont
+		canvas, getNearestRoundNumber((State.x1 - State.x0) / 10),
+		left, top, right, bottom, paint, thinStroke, thinFont
 	)
 	if (0f in State.x0..State.x1) {
 		val centerX = convertPlotX(0f, left, right)
