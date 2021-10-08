@@ -1,7 +1,4 @@
-import org.jetbrains.skija.Canvas
-import org.jetbrains.skija.Font
-import org.jetbrains.skija.Paint
-import org.jetbrains.skija.PaintMode
+import org.jetbrains.skija.*
 import kotlin.math.*
 
 enum class PlotMode {
@@ -42,15 +39,9 @@ private fun precessKey(code: Int) {
 	}
 }
 
-private fun changeZoom(
-	preciseWheelRotation: Float,
-	left: Float,
-	top: Float,
-	right: Float,
-	bottom: Float
-) {
-	val x = convertScreenX(State.mouseX, left, right)
-	val y = convertScreenY(State.mouseY, top, bottom)
+private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
+	val x = convertScreenX(State.mouseX, rect.left, rect.right)
+	val y = convertScreenY(State.mouseY, rect.top, rect.bottom)
 	assert(x >= 0 && y >= 0)
 	val factor = if (preciseWheelRotation == 1f) 0.95f else 1f / 0.95f
 	State.x1 = x + (State.x1 - x) * factor
@@ -82,9 +73,9 @@ private fun initField(content: List<PlotCell>, left: Float, top: Float, right: F
 	}
 }
 
-private fun moveByMouse(left: Float, top: Float, right: Float, bottom: Float) {
-	val deltaX = -State.vectorToMoveX / (right - left) * (State.x1 - State.x0)
-	val deltaY = State.vectorToMoveY / (bottom - top) * (State.y1 - State.y0)
+private fun moveByMouse(rect: Rect) {
+	val deltaX = -State.vectorToMoveX / (rect.right - rect.left) * (State.x1 - State.x0)
+	val deltaY = State.vectorToMoveY / (rect.bottom - rect.top) * (State.y1 - State.y0)
 	State.vectorToMoveX = 0f
 	State.vectorToMoveY = 0f
 	State.x0 += deltaX
@@ -95,10 +86,7 @@ private fun moveByMouse(left: Float, top: Float, right: Float, bottom: Float) {
 
 fun plot(
 	canvas: Canvas,
-	left: Float,
-	top: Float,
-	right: Float,
-	bottom: Float,
+	rect: Rect,
 	content: List<PlotCell>,
 	font: Font,
 	paint: Paint,
@@ -106,52 +94,46 @@ fun plot(
 	thinStroke: Paint,
 	plotMode: PlotMode
 ) {
-	moveByMouse(left, top, right, bottom)
-	if (right - left != State.lastWidth || bottom - top != State.lastHeight) {
-		initField(content, left, top, right, bottom)
-		State.lastWidth = right - left
-		State.lastHeight = bottom - top
+	moveByMouse(rect)
+	if (rect.right - rect.left != State.lastWidth || rect.bottom - rect.top != State.lastHeight) {
+		initField(content, rect.left, rect.top, rect.right, rect.bottom)
+		State.lastWidth = rect.right - rect.left
+		State.lastHeight = rect.bottom - rect.top
 	}
 	State.e?.let {
-		changeZoom(it.preciseWheelRotation.toFloat(), left, top, right, bottom)
+		changeZoom(it.preciseWheelRotation.toFloat(), rect)
 	}
 	State.e = null
 	State.pressedKeyCode?.let {
 		precessKey(it)
 	}
 	State.pressedKeyCode = null
+	val screenStep = 100f
 	drawNet(
-		canvas, getNearestRoundNumber((State.x1 - State.x0) / 10),
-		left, top, right, bottom, paint, thinStroke, thinFont
+		canvas, getNearestRoundNumber(screenStep / (rect.right - rect.left) * (State.x1 - State.x0)),
+		rect, paint, thinStroke, thinFont
 	)
 	if (0f in State.x0..State.x1) {
-		val centerX = convertPlotX(0f, left, right)
-		drawArrow(canvas, centerX, bottom, centerX, top, paint)
+		val centerX = convertPlotX(0f, rect.left, rect.right)
+		drawArrow(canvas, centerX, rect.bottom, centerX, rect.top, paint)
 	}
 	if (0f in State.y0..State.y1) {
-		val centerY = convertPlotY(0f, top, bottom)
-		drawArrow(canvas, left, centerY, right, centerY, paint)
+		val centerY = convertPlotY(0f, rect.top, rect.bottom)
+		drawArrow(canvas, rect.left, centerY, rect.right, centerY, paint)
 	}
 	if (plotMode == PlotMode.WITH_SEGMENTS)
-		drawSegments(canvas, content, left, top, right, bottom)
-	drawPoints(canvas, left, top, right, bottom, content, font, paint)
+		drawSegments(canvas, content, rect)
+	drawPoints(canvas, rect, content, font, paint)
 }
 
-private fun drawSegments(
-	canvas: Canvas,
-	content: List<PlotCell>,
-	left: Float,
-	top: Float,
-	right: Float,
-	bottom: Float,
-) {
+private fun drawSegments(canvas: Canvas,	content: List<PlotCell>, rect: Rect) {
 	val sortedPoints = content.sorted()
 	for (pointIndex in 0 until sortedPoints.size - 1) {
 		canvas.drawLine(
-			convertPlotX(sortedPoints[pointIndex].x, left, right),
-			convertPlotY(sortedPoints[pointIndex].y, top, bottom),
-			convertPlotX(sortedPoints[pointIndex + 1].x, left, right),
-			convertPlotY(sortedPoints[pointIndex + 1].y, top, bottom),
+			convertPlotX(sortedPoints[pointIndex].x, rect.left, rect.right),
+			convertPlotY(sortedPoints[pointIndex].y, rect.top, rect.bottom),
+			convertPlotX(sortedPoints[pointIndex + 1].x, rect.left, rect.right),
+			convertPlotY(sortedPoints[pointIndex + 1].y, rect.top, rect.bottom),
 			Paint().apply {
 				color = 0X6f0000a0
 				strokeWidth = 1.5f
@@ -163,74 +145,65 @@ private fun drawSegments(
 
 private fun drawPoints(
 	canvas: Canvas,
-	left: Float,
-	top: Float,
-	right: Float,
-	bottom: Float,
+	rect: Rect,
 	content: List<PlotCell>,
 	font: Font,
 	paint: Paint
 ) {
-	content.filter { it.x in State.x0..State.x1 && it.y in State.y0..State.y1 }.forEach {
-		val x = convertPlotX(it.x, left, right)
-		val y = convertPlotY(it.y, top, bottom)
-		val radius = 5f
-		canvas.drawCircle(x, y, radius, randomColor(it.x * it.y))
+	fun getCaption(x: Float, y: Float, radius: Float, point: PlotCell) {
 		if (abs(State.mouseX - x).pow(2) + abs(State.mouseY - y).pow(2) <= radius.pow(2)) {
 			canvas.drawCircle(x, y, radius + 2, Paint().apply {
 				color = 0xff0000ff.toInt()
 				mode = PaintMode.STROKE
 				strokeWidth = 2f
 			})
-			canvas.drawString("${it.text} - (${it.x}; ${it.y})", x + 5f, y - 5f, font, paint)
+			canvas.drawString("${point.text} - (${point.x}; ${point.y})", x + 5f, y - 5f, font, paint)
 		} else
-			canvas.drawString(it.text, x + 5f, y - 5f, font, paint)
+			canvas.drawString(point.text, x + 5f, y - 5f, font, paint)
+	}
+
+	content.filter { it.x in State.x0..State.x1 && it.y in State.y0..State.y1 }.forEach {
+		val x = convertPlotX(it.x, rect.left, rect.right)
+		val y = convertPlotY(it.y, rect.top, rect.bottom)
+		val radius = 5f
+		canvas.drawCircle(x, y, radius, randomColor(it.x * it.y))
+		getCaption(x, y, radius, it)
 	}
 }
 
 
-private fun drawNet(
-	canvas: Canvas,
-	step: Float,
-	left: Float,
-	top: Float,
-	right: Float,
-	bottom: Float,
-	paint: Paint,
-	thinStroke: Paint,
-	thinFont: Font
-) {
+private fun drawNet(canvas: Canvas, step: Float, rect: Rect, paint: Paint, thinStroke: Paint, thinFont: Font) {
 	for (vertical in (State.x0 / step).toInt() - 2..(State.x1 / step).toInt() + 2) {
 		if (step * vertical in State.x0..State.x1 &&
 			(vertical != 0 || 0f !in State.x0..State.x1 || (0f in State.x0..State.x1 && 0f in State.y0..State.y1))
 		) {
-			val screenX = convertPlotX(step * vertical, left, right)
-			canvas.drawLine(screenX, top, screenX, bottom, thinStroke)
+			val screenX = convertPlotX(step * vertical, rect.left, rect.right)
+			canvas.drawLine(screenX, rect.top, screenX, rect.bottom, thinStroke)
 			when {
-				0 < State.y0 -> canvas.drawString("${step * vertical}", screenX, bottom, thinFont, paint)
+				0 < State.y0 -> canvas.drawString("${step * vertical}", screenX, rect.bottom, thinFont, paint)
 				0 > State.y1 -> canvas.drawString(
-					"${step * vertical}", screenX, top + thinFont.size, thinFont, paint
+					"${step * vertical}", screenX, rect.top + thinFont.size, thinFont, paint
 				)
 				else -> canvas.drawString(
 					"${step * vertical}",
-					screenX, convertPlotY(0f, top, bottom) - 1f, thinFont, paint
+					screenX, convertPlotY(0f, rect.top, rect.bottom) - 1f, thinFont, paint
 				)
 			}
 		}
 	}
 	for (horizontal in (State.y0 / step).toInt() - 2..(State.y1 / step).toInt() + 2) {
 		if (horizontal * step in State.y0..State.y1 && (horizontal != 0 || 0F !in State.y0..State.y1)) {
-			val screenY = convertPlotY(horizontal * step, top, bottom)
-			canvas.drawLine(left, screenY, right, screenY, thinStroke)
+			val screenY = convertPlotY(horizontal * step, rect.top, rect.bottom)
+			canvas.drawLine(rect.left, screenY, rect.right, screenY, thinStroke)
 			val inscription = (step * horizontal).toString()
 			when {
-				0 < State.x0 -> canvas.drawString(inscription, left, screenY, thinFont, paint)
+				0 < State.x0 -> canvas.drawString(inscription, rect.left, screenY, thinFont, paint)
 				0 > State.x1 -> canvas.drawString(
-					inscription, right - thinFont.size * 0.6f * inscription.length,
+					inscription, rect.right - thinFont.size * 0.6f * inscription.length,
 					screenY, thinFont, paint
 				)
 				else -> canvas.drawString(
-					inscription, convertPlotX(0f, left, right) + 1f,
+					inscription, convertPlotX(0f, rect.left, rect.right) + 1f,
 					screenY, thinFont, paint
 				)
 			}

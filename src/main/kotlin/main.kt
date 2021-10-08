@@ -20,7 +20,13 @@ fun main() {
 	)
 	val intContent = listOf(
 		PlotCell(1f, 1f, "text1"),
-		PlotCell(1f, 10f, "text32")
+		PlotCell(2f, 10f, "text32"),
+		PlotCell(3f, 5f, "text32"),
+		PlotCell(5f, 15f, "text32"),
+		PlotCell(7f, -1f, "text32"),
+		PlotCell(8f, -2f, "text32"),
+		PlotCell(-1f, 3f, "text32"),
+		PlotCell(15f, 25f, "text32")
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
 //	createWindow("bar chart", Diagram.BAR_CHART, content)
@@ -112,7 +118,7 @@ class Renderer(
 
 			Diagram.PLOT -> {
 				plot(
-					canvas, w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F,
+					canvas, Rect(w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F),
 					content.map { it as? PlotCell ?: throw IllegalArgumentException("Wrong type for content") },
 					font, paint, thinFont, thinStroke, PlotMode.WITH_SEGMENTS
 				)
