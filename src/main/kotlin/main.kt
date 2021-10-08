@@ -83,13 +83,14 @@ fun drawWithByRight(canvas: Canvas, text: String, right: Float, y: Float, font: 
 fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
 	var currX = rect.left
 	var currY = rect.top + font.size
-	text.forEach {
-		canvas.drawString(it.toString(), currX, currY, font, paint)
-		currX += font.size * 0.6f
-		if (currX + font.size * 0.6f > rect.right){
+	val words = text.split(' ')
+	words.forEach {
+		if (currX + font.size * 0.6f * it.length > rect.right && currX != rect.left){
 			currX = rect.left
 			currY += font.size + 2f
 		}
+		canvas.drawString(it, currX, currY, font, paint)
+		currX += font.size * 0.6f * (it.length + 1)
 	}
 }
 

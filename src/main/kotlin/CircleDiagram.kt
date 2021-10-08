@@ -1,9 +1,10 @@
 import org.jetbrains.skija.Canvas
-import kotlin.math.cos
-import kotlin.math.sin
+import org.jetbrains.skija.Rect
+import kotlin.math.*
 
-private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, val text: String) {
-	fun draw(canvas: Canvas, centerX: Float, centerY: Float, r: Float) {
+private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, val text: String,
+								  val centerX: Float, val centerY: Float, val r: Float, val info: String) {
+	fun draw(canvas: Canvas) {
 		val sweepAngle = endAngle - beginAngle
 		drawArcInCircle(canvas, centerX, centerY, r, beginAngle, sweepAngle)
 		val angleForText = (beginAngle + endAngle) / 2
@@ -13,6 +14,27 @@ private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, va
 		else
 			centerX + (r + 15F) * sin(angleForText) - getTextWidth(text, font)
 		canvas.drawString(text, xForText, yForText, font, paint)
+	}
+
+	fun getAngle(x: Float, y: Float): Float {
+		val vectorX = x - centerX
+		val vectorY = y - centerY
+		val vectorSin = vectorX / distance(0f, 0f, vectorX, vectorY)
+		val vectorCos = vectorY / distance(0f, 0f, vectorX, vectorY)
+		val angle = if (vectorCos > 0)
+			PI.toFloat() - asin(vectorSin)
+		else
+			asin(vectorSin)
+		return if (angle > 0)
+			angle
+		else
+			angle + PI.toFloat() * 2
+	}
+
+	fun checkInSegment(x: Float, y: Float): Boolean {
+		if (distance(x, y, centerX, centerY) > r)
+			return false
+		return getAngle(x, y) in beginAngle..endAngle
 	}
 }
 
@@ -31,11 +53,15 @@ fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, co
 		val sweepAngle = it.value / sum * Math.PI.toFloat() * 2
 		val text = "${it.name} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
 		angle += sweepAngle
-		DiagramSegment(angle - sweepAngle, angle, text)
+		DiagramSegment(angle - sweepAngle, angle, text, centerX, centerY, r, it.detailedInfo)
 	}
 	diagramSegments.forEach {
-		it.draw(canvas, centerX, centerY, r)
+		it.draw(canvas)
 		lineInCircle(canvas, centerX, centerY, r, it.endAngle)
+	}
+	diagramSegments.forEach {
+		if (it.checkInSegment(State.mouseX, State.mouseY))
+			drawStringInRect(canvas, it.info, Rect(State.mouseX, State.mouseY + 10f, centerX + r, centerY + r), font)
 	}
 	canvas.drawCircle(centerX, centerY, r, stroke)
 }

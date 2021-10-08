@@ -143,7 +143,7 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 				strokeWidth = 2f
 			})
 			val text = "${point.name} - (${point.x}; ${point.y}) - ${point.detailedInfo}"
-			canvas.drawString(text, x + 5f, y - 5f, font, paint)
+			drawStringInRect(canvas, text, Rect(x + 5f, y - 5f - font.size, rect.right, rect.bottom), font)
 		} else
 			canvas.drawString(point.name, x + 5f, y - 5f, font, paint)
 	}
