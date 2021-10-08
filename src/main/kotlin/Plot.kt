@@ -17,59 +17,30 @@ fun convertScreenX(screenX: Float, rect: Rect) =
 fun convertScreenY(screenY: Float, rect: Rect) =
 	State.y1 - (screenY - rect.top) / (rect.bottom - rect.top) * (State.y1 - State.y0)
 
-private fun precessKey(code: Int) {
-	val step = (State.x1 - State.x0) / 30f
-	when (code) {
-		37 -> {
-			State.x0 -= step
-			State.x1 -= step
-		}
-		38 -> {
-			State.y0 += step
-			State.y1 += step
-		}
-		39 -> {
-			State.x0 += step
-			State.x1 += step
-		}
-		40 -> {
-			State.y0 -= step
-			State.y1 -= step
-		}
-	}
-}
 
-private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
-	val x = convertScreenX(State.mouseX, rect)
-	val y = convertScreenY(State.mouseY, rect)
-	assert(x >= 0 && y >= 0)
-	val factor = if (preciseWheelRotation == 1f) 0.95f else 1f / 0.95f
-	State.x1 = x + (State.x1 - x) * factor
-	State.y1 = y + (State.y1 - y) * factor
-	State.x0 = x - (x - State.x0) * factor
-	State.y0 = y - (y - State.y0) * factor
-
-}
-
-private fun initField(content: List<PlotCell>, left: Float, top: Float, right: Float, bottom: Float) {
-	State.x0 = content.minOf { it.x } - 1
-	State.x1 = content.maxOf { it.x } + 1
-	State.y0 = content.minOf { it.y } - 1
-	State.y1 = content.maxOf { it.y } + 1
-	// height / (bottom - left) should be equal width / (right - left)
-	val height = State.y1 - State.y0
-	val width = State.x1 - State.x0
-	when {
-		height / (bottom - left) < width / (right - left) -> {
-			val expectedHeight = width / (right - left) * (bottom - left)
-			State.y0 -= (expectedHeight - height) / 2
-			State.y1 + (expectedHeight - height) / 2
+private fun updateField(content: List<PlotCell>, rect: Rect) {
+	if (rect.right - rect.left != State.lastWidth || rect.bottom - rect.top != State.lastHeight) {
+		State.x0 = content.minOf { it.x } - 1
+		State.x1 = content.maxOf { it.x } + 1
+		State.y0 = content.minOf { it.y } - 1
+		State.y1 = content.maxOf { it.y } + 1
+		// height / (bottom - left) should be equal width / (right - left)
+		val height = State.y1 - State.y0
+		val width = State.x1 - State.x0
+		when {
+			height / (rect.bottom - rect.left) < width / (rect.right - rect.left) -> {
+				val expectedHeight = width / (rect.right - rect.left) * (rect.bottom - rect.left)
+				State.y0 -= (expectedHeight - height) / 2
+				State.y1 + (expectedHeight - height) / 2
+			}
+			else -> {
+				val expectedWidth = height / (rect.bottom - rect.top) * (rect.right - rect.left)
+				State.x0 -= (expectedWidth - width) / 2
+				State.x1 += (expectedWidth - width) / 2
+			}
 		}
-		else -> {
-			val expectedWidth = height / (bottom - top) * (right - left)
-			State.x0 -= (expectedWidth - width) / 2
-			State.x1 += (expectedWidth - width) / 2
-		}
+		State.lastWidth = rect.right - rect.left
+		State.lastHeight = rect.bottom - rect.top
 	}
 }
 
@@ -95,36 +66,65 @@ fun plot(
 	plotMode: PlotMode
 ) {
 	moveByMouse(rect)
-	if (rect.right - rect.left != State.lastWidth || rect.bottom - rect.top != State.lastHeight) {
-		initField(content, rect.left, rect.top, rect.right, rect.bottom)
-		State.lastWidth = rect.right - rect.left
-		State.lastHeight = rect.bottom - rect.top
-	}
-	State.e?.let {
-		changeZoom(it.preciseWheelRotation.toFloat(), rect)
-	}
-	State.e = null
-	State.pressedKeyCode?.let {
-		precessKey(it)
-	}
-	State.pressedKeyCode = null
+	updateField(content, rect)
+	processWheelRotation(rect)
+	processPressedKey()
 	val screenStep = 100f
-	drawNet(
-		canvas, getNearestRoundNumber(screenStep / (rect.right - rect.left) * (State.x1 - State.x0)),
-		rect, paint, thinStroke, thinFont
-	)
-	if (0f in State.x0..State.x1) {
-		val centerX = convertPlotX(0f, rect)
-		drawArrow(canvas, centerX, rect.bottom, centerX, rect.top, paint)
-	}
-	if (0f in State.y0..State.y1) {
-		val centerY = convertPlotY(0f, rect)
-		drawArrow(canvas, rect.left, centerY, rect.right, centerY, paint)
-	}
+	val plotStep = getNearestRoundNumber(screenStep / (rect.right - rect.left) * (State.x1 - State.x0))
+	drawNet(canvas, plotStep, rect, paint, thinStroke, thinFont)
+	drawCoordinateAxes(rect, canvas, paint)
 	if (plotMode == PlotMode.WITH_SEGMENTS)
 		drawSegments(canvas, content, rect)
 	drawPoints(canvas, rect, content, font, paint)
 }
+
+private fun processPressedKey() {
+	State.pressedKeyCode?.let {
+		precessKeyCode(it)
+	}
+	State.pressedKeyCode = null
+}
+
+private fun precessKeyCode(code: Int) {
+	val step = (State.x1 - State.x0) / 30f
+	when (code) {
+		37 -> {
+			State.x0 -= step
+			State.x1 -= step
+		}
+		38 -> {
+			State.y0 += step
+			State.y1 += step
+		}
+		39 -> {
+			State.x0 += step
+			State.x1 += step
+		}
+		40 -> {
+			State.y0 -= step
+			State.y1 -= step
+		}
+	}
+}
+
+private fun processWheelRotation(rect: Rect) {
+	State.e?.let {
+		changeZoom(it.preciseWheelRotation.toFloat(), rect)
+	}
+	State.e = null
+}
+
+private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
+	val x = convertScreenX(State.mouseX, rect)
+	val y = convertScreenY(State.mouseY, rect)
+	assert(x >= 0 && y >= 0)
+	val factor = if (preciseWheelRotation == 1f) 0.95f else 1f / 0.95f
+	State.x1 = x + (State.x1 - x) * factor
+	State.y1 = y + (State.y1 - y) * factor
+	State.x0 = x - (x - State.x0) * factor
+	State.y0 = y - (y - State.y0) * factor
+}
+
 
 private fun drawSegments(canvas: Canvas,	content: List<PlotCell>, rect: Rect) {
 	val sortedPoints = content.sorted()
@@ -143,13 +143,7 @@ private fun drawSegments(canvas: Canvas,	content: List<PlotCell>, rect: Rect) {
 
 }
 
-private fun drawPoints(
-	canvas: Canvas,
-	rect: Rect,
-	content: List<PlotCell>,
-	font: Font,
-	paint: Paint
-) {
+private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>, font: Font, paint: Paint) {
 	fun getCaption(x: Float, y: Float, radius: Float, point: PlotCell) {
 		if (abs(State.mouseX - x).pow(2) + abs(State.mouseY - y).pow(2) <= radius.pow(2)) {
 			canvas.drawCircle(x, y, radius + 2, Paint().apply {
@@ -208,6 +202,21 @@ private fun drawNet(canvas: Canvas, step: Float, rect: Rect, paint: Paint, thinS
 				)
 			}
 		}
+	}
+}
+
+private fun drawCoordinateAxes(
+	rect: Rect,
+	canvas: Canvas,
+	paint: Paint
+) {
+	if (0f in State.x0..State.x1) {
+		val centerX = convertPlotX(0f, rect)
+		drawArrow(canvas, centerX, rect.bottom, centerX, rect.top, paint)
+	}
+	if (0f in State.y0..State.y1) {
+		val centerY = convertPlotY(0f, rect)
+		drawArrow(canvas, rect.left, centerY, rect.right, centerY, paint)
 	}
 }
 
