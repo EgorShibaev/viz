@@ -111,25 +111,30 @@ class Renderer(
 		val h = (height / contentScale).toInt()
 
 		assert(content.isNotEmpty())
+		checkIsContentCorrect()
+
 		when (type) {
 			Diagram.BAR_CHART -> barChart(
 				canvas, Rect(w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F),
-				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") }
+				content.map { it as ChartCell }
 			)
 			Diagram.CIRCLE -> separatedCircle(
 				canvas, w / 2F, h / 2F, min(w / 2F, h / 2F) - 30F,
-				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") }
+				content.map { it as ChartCell }
 			)
-
-			Diagram.PLOT -> {
-				plot(
-					canvas, Rect(w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F),
-					content.map { it as? PlotCell ?: throw IllegalArgumentException("Wrong type for content") },
-					PlotMode.WITH_SEGMENTS
-				)
-			}
+			Diagram.PLOT -> plot(
+				canvas, Rect(w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F),
+				content.map { it as PlotCell }, PlotMode.WITH_SEGMENTS
+			)
 		}
 		layer.needRedraw()
+	}
+
+	private fun checkIsContentCorrect() {
+		when (type) {
+			Diagram.PLOT -> assert(content.all { it is PlotCell })
+			Diagram.CIRCLE, Diagram.BAR_CHART -> assert(content.all { it is ChartCell })
+		}
 	}
 }
 
@@ -146,8 +151,8 @@ object State {
 	var pressedKeyCode: Int? = null
 	var vectorToMoveX = 0f
 	var vectorToMoveY = 0f
-	var lastDraggedX : Float? = null
-	var lastDraggedY : Float? = null
+	var lastDraggedX: Float? = null
+	var lastDraggedY: Float? = null
 }
 
 object MyMouseMotionAdapter : MouseMotionAdapter() {
@@ -163,8 +168,7 @@ object MyMouseMotionAdapter : MouseMotionAdapter() {
 			if (lastX == null || lastY == null || abs(lastX - x) > 20f || abs(lastY - y) > 20f) {
 				State.lastDraggedX = x.toFloat()
 				State.lastDraggedY = y.toFloat()
-			}
-			else {
+			} else {
 				State.vectorToMoveX += x - lastX
 				State.vectorToMoveY += y - lastY
 				State.lastDraggedX = x.toFloat()
