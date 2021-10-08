@@ -135,7 +135,7 @@ private fun drawSegments(canvas: Canvas, content: List<PlotCell>, rect: Rect) {
 }
 
 private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
-	fun getCaption(x: Float, y: Float, radius: Float, point: PlotCell) {
+	fun drawCaption(x: Float, y: Float, radius: Float, point: PlotCell) {
 		if (distance(x, y, State.mouseX, State.mouseY) <= radius) {
 			canvas.drawCircle(x, y, radius + 2, Paint().apply {
 				color = 0xff0000ff.toInt()
@@ -144,16 +144,18 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 			})
 			val text = "${point.name} - (${point.x}; ${point.y}) - ${point.detailedInfo}"
 			drawStringInRect(canvas, text, Rect(x + 5f, y - 5f - font.size, rect.right, rect.bottom), font)
-		} else
-			canvas.drawString(point.name, x + 5f, y - 5f, font, paint)
+		}
 	}
 
+	val radius = 5f
 	content.filter { it.x in State.x0..State.x1 && it.y in State.y0..State.y1 }.forEach {
 		val x = convertPlotX(it.x, rect)
 		val y = convertPlotY(it.y, rect)
-		val radius = 5f
 		canvas.drawCircle(x, y, radius, randomColor(it.x * it.y))
-		getCaption(x, y, radius, it)
+		canvas.drawString(it.name, x + 5f, y - 5f, font, paint)
+	}
+	content.forEach {
+		drawCaption(convertPlotX(it.x, rect),  convertPlotY(it.y, rect), radius, it)
 	}
 }
 
