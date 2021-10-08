@@ -142,9 +142,10 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 				mode = PaintMode.STROKE
 				strokeWidth = 2f
 			})
-			canvas.drawString("${point.text} - (${point.x}; ${point.y})", x + 5f, y - 5f, font, paint)
+			val text = "${point.name} - (${point.x}; ${point.y}) - ${point.detailedInfo}"
+			canvas.drawString(text, x + 5f, y - 5f, font, paint)
 		} else
-			canvas.drawString(point.text, x + 5f, y - 5f, font, paint)
+			canvas.drawString(point.name, x + 5f, y - 5f, font, paint)
 	}
 
 	content.filter { it.x in State.x0..State.x1 && it.y in State.y0..State.y1 }.forEach {

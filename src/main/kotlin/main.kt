@@ -13,20 +13,20 @@ import kotlin.random.Random
 
 fun main() {
 	val content = listOf(
-		ChartCell(100f, "text1"),
-		ChartCell(64f, "text2"),
-		ChartCell(127f, "text3"),
-		ChartCell(1000f, "text4")
+		ChartCell(100f, "text1", "additional information number one"),
+		ChartCell(66f, "text2", "additional information number two"),
+		ChartCell(127f, "text3", "additional information number three"),
+		ChartCell(1000f, "text4", "additional information number four"),
 	)
 	val intContent = listOf(
-		PlotCell(1f, 1f, "text1"),
-		PlotCell(2f, 10f, "text32"),
-		PlotCell(3f, 5f, "text32"),
-		PlotCell(5f, 15f, "text32"),
-		PlotCell(7f, -1f, "text32"),
-		PlotCell(8f, -2f, "text32"),
-		PlotCell(-1f, 3f, "text32"),
-		PlotCell(15f, 25f, "text32")
+		PlotCell(1f, 1f, "text1", "additional information number one"),
+		PlotCell(2f, 10f, "text32", "additional information number two"),
+		PlotCell(3f, 5f, "text32", "additional information number thee"),
+		PlotCell(5f, 15f, "text32", "additional information number four"),
+		PlotCell(7f, -1f, "text32", "additional information number five"),
+		PlotCell(8f, -2f, "text32", "additional information number six"),
+		PlotCell(-1f, 3f, "text32", "additional information number seven"),
+		PlotCell(15f, 25f, "text32", "additional information number eight"),
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
 	createWindow("bar chart", Diagram.BAR_CHART, content)
@@ -35,7 +35,7 @@ fun main() {
 
 open class Cell
 
-class PlotCell(val x: Float, val y: Float, val text: String) : Cell(), Comparable<PlotCell> {
+class PlotCell(val x: Float, val y: Float, val name: String, val detailedInfo: String) : Cell(), Comparable<PlotCell> {
 	override operator fun compareTo(other: PlotCell): Int = when {
 		x > other.x -> 1
 		x == other.x -> y.compareTo(other.y)
@@ -43,7 +43,7 @@ class PlotCell(val x: Float, val y: Float, val text: String) : Cell(), Comparabl
 	}
 }
 
-class ChartCell(val value: Float, val text: String) : Cell()
+class ChartCell(val value: Float, val name: String, val detailedInfo: String) : Cell()
 
 enum class Diagram {
 	CIRCLE, BAR_CHART, PLOT
@@ -78,6 +78,19 @@ fun getTextWidth(text: String, font: Font) = text.length * font.size * 0.6f
 
 fun drawWithByRight(canvas: Canvas, text: String, right: Float, y: Float, font: Font, paint: Paint) {
 	canvas.drawString(text, right - getTextWidth(text, font), y, font, paint)
+}
+
+fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
+	var currX = rect.left
+	var currY = rect.top + font.size
+	text.forEach {
+		canvas.drawString(it.toString(), currX, currY, font, paint)
+		currX += font.size * 0.6f
+		if (currX + font.size * 0.6f > rect.right){
+			currX = rect.left
+			currY += font.size + 2f
+		}
+	}
 }
 
 fun distance(x0: Float, y0: Float, x1: Float, y1: Float) = sqrt((x0 - x1).pow(2) + (y0 - y1).pow(2))

@@ -29,7 +29,7 @@ fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, co
 	var angle = 0F
 	val diagramSegments = content.map {
 		val sweepAngle = it.value / sum * Math.PI.toFloat() * 2
-		val text = "${it.text} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
+		val text = "${it.name} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
 		angle += sweepAngle
 		DiagramSegment(angle - sweepAngle, angle, text)
 	}

@@ -9,7 +9,7 @@ fun barChart(canvas: Canvas, rect: Rect, content: List<ChartCell>) {
 	val widthOfColumn = (rect.right - (rect.left + leftIndent)) / (1.5F * content.size - 0.5F)
 	val factor = (rect.bottom - font.size - 5F - (rect.top + font.size + 5F)) / max
 	verticalLines(canvas, max, rect, factor)
-	drawColumns(canvas, rect.left + leftIndent, rect.bottom, widthOfColumn, factor, content)
+	drawColumns(canvas, Rect(rect.left + leftIndent, rect.top, rect.right, rect.bottom), widthOfColumn, factor, content)
 }
 
 private fun verticalLines(canvas: Canvas, max: Float, rect: Rect, factor: Float) {
@@ -32,27 +32,40 @@ private fun verticalLines(canvas: Canvas, max: Float, rect: Rect, factor: Float)
 	}
 }
 
-private fun drawColumns(
-	canvas: Canvas, left: Float, bottom: Float, widthOfColumn: Float, factor: Float, content: List<ChartCell>
-) {
-	var currX = left
-	content.forEach {
-		val value = it.value
-		val text = it.text
-		val rect = Rect(
-			currX,
-			bottom - font.size - 5F - factor * value,
-			currX + widthOfColumn,
-			bottom - font.size - 5F
-		)
-		canvas.drawRect(rect, randomColor(value))
+data class Column(val rect: Rect, val name: String, val value: Float, val info: String) {
+	fun draw(canvas: Canvas) {
+		canvas.drawRect(rect, randomColor(rect.bottom - rect.top))
 		canvas.drawRect(rect, stroke)
 		canvas.drawString(
-			text, currX + widthOfColumn / 2 - getTextWidth(text, font) / 2F, bottom - 2F, font, paint
+			name, (rect.right + rect.left) / 2 - getTextWidth(name, font) / 2F, rect.bottom + font.size, font, paint
 		)
-		if (checkInRect(rect, State.mouseX, State.mouseY))
-			canvas.drawString(value.toString(), State.mouseX, State.mouseY, font, paint)
-		currX += 1.5F * widthOfColumn
+		canvas.drawString(
+			value.toString(), (rect.right + rect.left) / 2- getTextWidth(value.toString(), font) / 2F,
+			rect.bottom - 3f, font, paint
+		)
+	}
+}
+
+private fun drawColumns(
+	canvas: Canvas, rect: Rect, widthOfColumn: Float, factor: Float, content: List<ChartCell>
+) {
+	var currX = rect.left
+	val columns = content.map {
+		val columnRect = Rect(
+			currX,
+			rect.bottom - font.size - 5F - factor * it.value,
+			currX + widthOfColumn,
+			rect.bottom - font.size - 5F
+		)
+		currX += widthOfColumn * 1.5f
+		Column(columnRect, it.name, it.value, it.detailedInfo)
+	}
+	columns.forEach {
+		it.draw(canvas)
+	}
+	columns.forEach {
+		if (checkInRect(it.rect, State.mouseX, State.mouseY))
+			drawStringInRect(canvas, it.info, Rect(State.mouseX, State.mouseY + 10f, rect.right, rect.bottom), font)
 	}
 }
 
