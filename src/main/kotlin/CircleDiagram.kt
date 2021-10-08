@@ -2,7 +2,26 @@ import org.jetbrains.skija.Canvas
 import kotlin.math.cos
 import kotlin.math.sin
 
-private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, val text: String)
+private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, val text: String) {
+	fun draw(canvas: Canvas, centerX: Float, centerY: Float, r: Float) {
+		val sweepAngle = endAngle - beginAngle
+		drawArcInCircle(canvas, centerX, centerY, r, beginAngle, sweepAngle)
+		val angleForText = (beginAngle + endAngle) / 2
+		val yForText = centerY - (r + 15F) * cos(angleForText)
+		val xForText = if (sin(angleForText) > 0)
+			centerX + (r + 15F) * sin(angleForText)
+		else
+			centerX + (r + 15F) * sin(angleForText) - getTextWidth(text, font)
+		canvas.drawString(text, xForText, yForText, font, paint)
+	}
+}
+
+fun drawArcInCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, beginAngle: Float, sweepAngle: Float) {
+	canvas.drawArc(
+		centerX - r, centerY - r, centerX + r, centerY + r,
+		toDegree(beginAngle) - 90F, toDegree(sweepAngle), true, randomColor(sweepAngle)
+	)
+}
 
 fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, content: List<ChartCell>) {
 	assert(content.all { it.value >= 0 })
@@ -15,25 +34,10 @@ fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, co
 		DiagramSegment(angle - sweepAngle, angle, text)
 	}
 	diagramSegments.forEach {
-		drawSegment(canvas, centerX, centerY, r, it)
+		it.draw(canvas, centerX, centerY, r)
 		lineInCircle(canvas, centerX, centerY, r, it.endAngle)
 	}
 	canvas.drawCircle(centerX, centerY, r, stroke)
-}
-
-private fun drawSegment(canvas: Canvas, centerX: Float, centerY: Float, r: Float, segment: DiagramSegment) {
-	val sweepAngle = segment.endAngle - segment.beginAngle
-	canvas.drawArc(
-		centerX - r, centerY - r, centerX + r, centerY + r,
-		toDegree(segment.beginAngle) - 90F, toDegree(sweepAngle), true, randomColor(sweepAngle)
-	)
-	val angleForText = (segment.beginAngle + segment.endAngle) / 2
-	val yForText = centerY - (r + 15F) * cos(angleForText)
-	val xForText = if (sin(angleForText) > 0)
-		centerX + (r + 15F) * sin(angleForText)
-	else
-		centerX + (r + 15F) * sin(angleForText) - getTextWidth(segment.text, font)
-	canvas.drawString(segment.text, xForText, yForText, font, paint)
 }
 
 private fun toDegree(angleInRadian: Float) = angleInRadian / Math.PI.toFloat() * 180F
