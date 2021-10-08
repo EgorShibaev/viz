@@ -23,7 +23,7 @@ fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, co
 		val xForText = if (sin(angleForText) > 0)
 			centerX + (r + 15F) * sin(angleForText)
 		else
-			centerX + (r + 15F) * sin(angleForText) - font.size * 0.6F * text.length
+			centerX + (r + 15F) * sin(angleForText) - getTextWidth(text, font)
 		canvas.drawString(text, xForText, yForText, font, paint)
 	}
 	canvas.drawCircle(centerX, centerY, r, stroke)

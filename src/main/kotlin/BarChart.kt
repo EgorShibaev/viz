@@ -48,7 +48,7 @@ private fun drawColumns(
 		canvas.drawRect(rect, randomColor(value))
 		canvas.drawRect(rect, stroke)
 		canvas.drawString(
-			text, currX + widthOfColumn / 2 - text.length * font.size * 0.6F / 2F, bottom - 2F, font, paint
+			text, currX + widthOfColumn / 2 - getTextWidth(text, font) * 0.6F / 2F, bottom - 2F, font, paint
 		)
 		if (checkInRect(rect, State.mouseX, State.mouseY))
 			canvas.drawString(value.toString(), State.mouseX, State.mouseY, font, paint)

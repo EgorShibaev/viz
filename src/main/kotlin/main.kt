@@ -74,6 +74,12 @@ val thinStroke = Paint().apply {
 	strokeWidth = 0.5f
 }
 
+fun getTextWidth(text: String, font: Font) = text.length * font.size * 0.6f
+
+fun drawWithByRight(canvas: Canvas, text: String, right: Float, y: Float, font: Font, paint: Paint) {
+	canvas.drawString(text, right - getTextWidth(text, font), y, font, paint)
+}
+
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
 	val window = SkiaWindow()
 	window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
