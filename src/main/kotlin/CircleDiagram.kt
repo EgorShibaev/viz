@@ -4,20 +4,11 @@ import org.jetbrains.skija.Paint
 import kotlin.math.cos
 import kotlin.math.sin
 
-fun separatedCircle(
-	canvas: Canvas,
-	centerX: Float,
-	centerY: Float,
-	r: Float,
-	content: List<ChartCell>,
-	font: Font,
-	paint: Paint,
-	stroke: Paint
-) {
+fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, content: List<ChartCell>) {
 	assert(content.all { it.value >= 0 })
 	val sum = content.sumOf { it.value.toDouble() }.toFloat()
 	var angle = 0F
-	lineInCircle(canvas, centerX, centerY, r, angle, stroke)
+	lineInCircle(canvas, centerX, centerY, r, angle)
 	content.forEach {
 		val sweepAngle = it.value / sum * Math.PI.toFloat() * 2
 		val text = "${it.text} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
@@ -39,13 +30,13 @@ fun separatedCircle(
 	angle = 0F
 	content.forEach {
 		angle += it.value / sum * Math.PI.toFloat() * 2
-		lineInCircle(canvas, centerX, centerY, r, angle, stroke)
+		lineInCircle(canvas, centerX, centerY, r, angle)
 	}
 }
 
 private fun toDegree(angleInRadian: Float) = angleInRadian / Math.PI.toFloat() * 180F
 
-private fun lineInCircle(canvas: Canvas, centerX: Float, centerY: Float, length: Float, angle: Float, stroke: Paint) {
+private fun lineInCircle(canvas: Canvas, centerX: Float, centerY: Float, length: Float, angle: Float) {
 	canvas.drawLine(
 		centerX, centerY,
 		centerX + length * sin(angle),

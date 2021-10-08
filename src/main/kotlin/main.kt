@@ -29,9 +29,8 @@ fun main() {
 		PlotCell(15f, 25f, "text32")
 	)
 	createWindow("plot", Diagram.PLOT, intContent)
-//	createWindow("bar chart", Diagram.BAR_CHART, content)
-//	createWindow("circle", Diagram.CIRCLE, content)
-
+	createWindow("bar chart", Diagram.BAR_CHART, content)
+	createWindow("circle", Diagram.CIRCLE, content)
 }
 
 open class Cell
@@ -52,6 +51,27 @@ enum class Diagram {
 
 fun randomColor(seed: Float) = Paint().apply {
 	color = 0xFF000000.toInt() + Random((ln(seed + 1) * 1e7).toInt()).nextInt() % 0x1000000
+}
+
+private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
+val font = Font(typeface, 15f)
+val thinFont = Font(typeface, 12f)
+val paint = Paint().apply {
+	color = 0xff000000.toInt()
+	mode = PaintMode.FILL
+	strokeWidth = 1f
+}
+
+val stroke = Paint().apply {
+	color = 0xFF000000.toInt()
+	mode = PaintMode.STROKE
+	strokeWidth = 2f
+}
+
+val thinStroke = Paint().apply {
+	color = 0x5F000000
+	mode = PaintMode.STROKE
+	strokeWidth = 0.5f
 }
 
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
@@ -76,27 +96,6 @@ class Renderer(
 	private val type: Diagram,
 	private val content: List<Cell>
 ) : SkiaRenderer {
-	private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
-	private val font = Font(typeface, 15f)
-	private val thinFont = Font(typeface, 12f)
-	private val paint = Paint().apply {
-		color = 0xff000000.toInt()
-		mode = PaintMode.FILL
-		strokeWidth = 1f
-	}
-
-	private val stroke = Paint().apply {
-		color = 0xFF000000.toInt()
-		mode = PaintMode.STROKE
-		strokeWidth = 2f
-	}
-
-	private val thinStroke = Paint().apply {
-		color = 0x5F000000
-		mode = PaintMode.STROKE
-		strokeWidth = 0.5f
-	}
-
 	override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
 		val contentScale = layer.contentScale
 		canvas.scale(contentScale, contentScale)
@@ -106,21 +105,19 @@ class Renderer(
 		assert(content.isNotEmpty())
 		when (type) {
 			Diagram.BAR_CHART -> barChart(
-				canvas, w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F,
-				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") },
-				font, stroke, thinStroke, paint
+				canvas, Rect(w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F),
+				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") }
 			)
 			Diagram.CIRCLE -> separatedCircle(
 				canvas, w / 2F, h / 2F, min(w / 2F, h / 2F) - 30F,
-				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") },
-				font, paint, stroke
+				content.map { it as? ChartCell ?: throw IllegalArgumentException("Wrong type for content") }
 			)
 
 			Diagram.PLOT -> {
 				plot(
 					canvas, Rect(w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F),
 					content.map { it as? PlotCell ?: throw IllegalArgumentException("Wrong type for content") },
-					font, paint, thinFont, thinStroke, PlotMode.WITH_SEGMENTS
+					PlotMode.WITH_SEGMENTS
 				)
 			}
 		}

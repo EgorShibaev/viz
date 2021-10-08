@@ -55,27 +55,18 @@ private fun moveByMouse(rect: Rect) {
 	State.y1 += deltaY
 }
 
-fun plot(
-	canvas: Canvas,
-	rect: Rect,
-	content: List<PlotCell>,
-	font: Font,
-	paint: Paint,
-	thinFont: Font,
-	thinStroke: Paint,
-	plotMode: PlotMode
-) {
+fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>, plotMode: PlotMode) {
 	moveByMouse(rect)
 	updateField(content, rect)
 	processWheelRotation(rect)
 	processPressedKey()
 	val screenStep = 100f
 	val plotStep = getNearestRoundNumber(screenStep / (rect.right - rect.left) * (State.x1 - State.x0))
-	drawNet(canvas, plotStep, rect, paint, thinStroke, thinFont)
-	drawCoordinateAxes(rect, canvas, paint)
+	drawGrid(canvas, plotStep, rect)
+	drawCoordinateAxes(rect, canvas)
 	if (plotMode == PlotMode.WITH_SEGMENTS)
 		drawSegments(canvas, content, rect)
-	drawPoints(canvas, rect, content, font, paint)
+	drawPoints(canvas, rect, content)
 }
 
 private fun processPressedKey() {
@@ -126,7 +117,7 @@ private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
 }
 
 
-private fun drawSegments(canvas: Canvas,	content: List<PlotCell>, rect: Rect) {
+private fun drawSegments(canvas: Canvas, content: List<PlotCell>, rect: Rect) {
 	val sortedPoints = content.sorted()
 	for (pointIndex in 0 until sortedPoints.size - 1) {
 		canvas.drawLine(
@@ -140,10 +131,9 @@ private fun drawSegments(canvas: Canvas,	content: List<PlotCell>, rect: Rect) {
 			}
 		)
 	}
-
 }
 
-private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>, font: Font, paint: Paint) {
+private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 	fun getCaption(x: Float, y: Float, radius: Float, point: PlotCell) {
 		if (abs(State.mouseX - x).pow(2) + abs(State.mouseY - y).pow(2) <= radius.pow(2)) {
 			canvas.drawCircle(x, y, radius + 2, Paint().apply {
@@ -166,25 +156,8 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>, font
 }
 
 
-private fun drawNet(canvas: Canvas, step: Float, rect: Rect, paint: Paint, thinStroke: Paint, thinFont: Font) {
-	for (vertical in (State.x0 / step).toInt() - 2..(State.x1 / step).toInt() + 2) {
-		if (step * vertical in State.x0..State.x1 &&
-			(vertical != 0 || 0f !in State.x0..State.x1 || (0f in State.x0..State.x1 && 0f in State.y0..State.y1))
-		) {
-			val screenX = convertPlotX(step * vertical, rect)
-			canvas.drawLine(screenX, rect.top, screenX, rect.bottom, thinStroke)
-			when {
-				0 < State.y0 -> canvas.drawString("${step * vertical}", screenX, rect.bottom, thinFont, paint)
-				0 > State.y1 -> canvas.drawString(
-					"${step * vertical}", screenX, rect.top + thinFont.size, thinFont, paint
-				)
-				else -> canvas.drawString(
-					"${step * vertical}",
-					screenX, convertPlotY(0f, rect) - 1f, thinFont, paint
-				)
-			}
-		}
-	}
+private fun drawGrid(canvas: Canvas, step: Float, rect: Rect) {
+	drawVerticallyGrid(canvas, rect, step)
 	for (horizontal in (State.y0 / step).toInt() - 2..(State.y1 / step).toInt() + 2) {
 		if (horizontal * step in State.y0..State.y1 && (horizontal != 0 || 0F !in State.y0..State.y1)) {
 			val screenY = convertPlotY(horizontal * step, rect)
@@ -205,22 +178,33 @@ private fun drawNet(canvas: Canvas, step: Float, rect: Rect, paint: Paint, thinS
 	}
 }
 
-private fun drawCoordinateAxes(
-	rect: Rect,
-	canvas: Canvas,
-	paint: Paint
-) {
-	if (0f in State.x0..State.x1) {
-		val centerX = convertPlotX(0f, rect)
-		drawArrow(canvas, centerX, rect.bottom, centerX, rect.top, paint)
-	}
-	if (0f in State.y0..State.y1) {
-		val centerY = convertPlotY(0f, rect)
-		drawArrow(canvas, rect.left, centerY, rect.right, centerY, paint)
+private fun drawVerticallyGrid(canvas: Canvas, rect: Rect, step: Float) {
+	val startX = ceil(State.x0 / step).toInt()
+	val finishX = floor(State.x1 / step).toInt()
+	for (vertical in startX..finishX) {
+		val screenX = convertPlotX(step * vertical, rect)
+		canvas.drawLine(screenX, rect.top, screenX, rect.bottom, thinStroke)
+		val inscription = (step * vertical).toString()
+		when {
+			0 < State.y0 -> canvas.drawString(inscription, screenX, rect.bottom, thinFont, paint)
+			0 > State.y1 -> canvas.drawString(inscription, screenX, rect.top + thinFont.size, thinFont, paint)
+			else -> canvas.drawString(inscription, screenX, convertPlotY(0f, rect) - 1f, thinFont, paint)
+		}
 	}
 }
 
-private fun drawArrow(canvas: Canvas, x0: Float, y0: Float, x1: Float, y1: Float, paint: Paint) {
+private fun drawCoordinateAxes(rect: Rect, canvas: Canvas) {
+	if (0f in State.x0..State.x1) {
+		val centerX = convertPlotX(0f, rect)
+		drawArrow(canvas, centerX, rect.bottom, centerX, rect.top)
+	}
+	if (0f in State.y0..State.y1) {
+		val centerY = convertPlotY(0f, rect)
+		drawArrow(canvas, rect.left, centerY, rect.right, centerY)
+	}
+}
+
+private fun drawArrow(canvas: Canvas, x0: Float, y0: Float, x1: Float, y1: Float) {
 	canvas.drawLine(x0, y0, x1, y1, paint)
 	val len = 15f
 	val angle = Math.PI.toFloat() / 6
