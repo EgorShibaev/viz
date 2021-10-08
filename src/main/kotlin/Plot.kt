@@ -109,11 +109,12 @@ private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
 	val x = convertScreenX(State.mouseX, rect)
 	val y = convertScreenY(State.mouseY, rect)
 	assert(x >= 0 && y >= 0)
-	val factor = if (preciseWheelRotation == 1f) 0.95f else 1f / 0.95f
-	State.x1 = x + (State.x1 - x) * factor
-	State.y1 = y + (State.y1 - y) * factor
-	State.x0 = x - (x - State.x0) * factor
-	State.y0 = y - (y - State.y0) * factor
+	val zoomFactor = 0.95f
+	val currentFactor = if (preciseWheelRotation == 1f) zoomFactor else 1f / zoomFactor
+	State.x1 = x + (State.x1 - x) * currentFactor
+	State.y1 = y + (State.y1 - y) * currentFactor
+	State.x0 = x - (x - State.x0) * currentFactor
+	State.y0 = y - (y - State.y0) * currentFactor
 }
 
 
@@ -135,7 +136,7 @@ private fun drawSegments(canvas: Canvas, content: List<PlotCell>, rect: Rect) {
 
 private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 	fun getCaption(x: Float, y: Float, radius: Float, point: PlotCell) {
-		if (abs(State.mouseX - x).pow(2) + abs(State.mouseY - y).pow(2) <= radius.pow(2)) {
+		if (distance(x, y, State.mouseX, State.mouseY) <= radius) {
 			canvas.drawCircle(x, y, radius + 2, Paint().apply {
 				color = 0xff0000ff.toInt()
 				mode = PaintMode.STROKE

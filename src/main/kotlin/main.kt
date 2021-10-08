@@ -80,6 +80,8 @@ fun drawWithByRight(canvas: Canvas, text: String, right: Float, y: Float, font: 
 	canvas.drawString(text, right - getTextWidth(text, font), y, font, paint)
 }
 
+fun distance(x0: Float, y0: Float, x1: Float, y1: Float) = sqrt((x0 - x1).pow(2) + (y0 - y1).pow(2))
+
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
 	val window = SkiaWindow()
 	window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
