@@ -11,8 +11,9 @@ import javax.swing.WindowConstants
 import kotlin.math.*
 
 fun main(args: Array<String>) {
-	val (type, content) = getContentFromFile(args) ?: return
-	writeToFile("OutputFile.png", type, content)
+	val commandLine = processCommandLine(args) ?: return
+	val (type, content) = getContentFromFile(commandLine) ?: return
+	writeToFile(commandLine.outputFile, type, content)
 	createWindow(type.toString(), type, content)
 }
 

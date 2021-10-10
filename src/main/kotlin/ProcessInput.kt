@@ -4,8 +4,7 @@ import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.Path
 
-fun getContentFromFile(args: Array<String>): Pair<Diagram, List<Cell>>? {
-	val commandLine = processCommandLine(args) ?: return null
+fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {
 	val content = readInputFile(commandLine.inputFile) ?: return null
 	return Pair(
 		commandLine.type,
