@@ -49,7 +49,7 @@ fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h:
 
 	when (type) {
 		Diagram.BAR_CHART -> barChart(
-			canvas, Rect(w / 100F, h / 100F, w.toFloat() - 10F, h.toFloat() - 10F),
+			canvas, Rect(w / 100F, h / 100F, w - 10F, h - 10F),
 			content.map { it as ChartCell }
 		)
 		Diagram.CIRCLE -> separatedCircle(
@@ -57,8 +57,8 @@ fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h:
 			content.map { it as ChartCell }
 		)
 		Diagram.PLOT -> plot(
-			canvas, Rect(w / 100f, h / 100f, w.toFloat() - 10F, h.toFloat() - 10F),
-			content.map { it as PlotCell }, PlotMode.WITH_SEGMENTS
+			canvas, Rect(w / 100f, h / 100f, w - 10F, h - 10F),
+			content.map { it as PlotCell }
 		)
 	}
 }

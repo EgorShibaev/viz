@@ -1,10 +1,6 @@
 import org.jetbrains.skija.*
 import kotlin.math.*
 
-enum class PlotMode {
-	WITH_SEGMENTS, USUAL
-}
-
 fun convertPlotX(plotX: Float, rect: Rect) =
 	rect.left + (plotX - State.x0) / (State.x1 - State.x0) * (rect.right - rect.left)
 
@@ -55,7 +51,7 @@ private fun moveByMouse(rect: Rect) {
 	State.y1 += deltaY
 }
 
-fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>, plotMode: PlotMode) {
+fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 	moveByMouse(rect)
 	updateField(content, rect)
 	processWheelRotation(rect)
@@ -64,8 +60,7 @@ fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>, plotMode: PlotMode
 	val plotStep = getNearestRoundNumber(screenStep / (rect.right - rect.left) * (State.x1 - State.x0))
 	drawGrid(canvas, plotStep, rect)
 	drawCoordinateAxes(rect, canvas)
-	if (plotMode == PlotMode.WITH_SEGMENTS)
-		drawSegments(canvas, content, rect)
+	drawSegments(canvas, content, rect)
 	drawPoints(canvas, rect, content)
 }
 
