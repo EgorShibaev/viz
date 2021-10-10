@@ -4,8 +4,9 @@ import PlotCell
 import State
 import distance
 import drawStringInRect
-import drawWithByRight
+import drawByRightSide
 import fontsAndPaints.*
+import getNearestRoundNumber
 import org.jetbrains.skija.*
 import kotlin.math.*
 
@@ -179,7 +180,7 @@ private fun drawHorizontallyGrid(canvas: Canvas, step: Float, rect: Rect) {
 		val inscription = (step * horizontal).toString()
 		when {
 			0 < State.x0 -> canvas.drawString(inscription, rect.left, screenY, thinFont, paint)
-			0 > State.x1 -> drawWithByRight(canvas, inscription, rect.right, screenY, font, paint)
+			0 > State.x1 -> drawByRightSide(canvas, inscription, rect.right, screenY, font, paint)
 			else -> canvas.drawString(inscription, convertPlotX(0f, rect) + 1f, screenY, thinFont, paint)
 		}
 	}
@@ -224,9 +225,4 @@ private fun drawArrow(canvas: Canvas, x0: Float, y0: Float, x1: Float, y1: Float
 	val rotatedVectorX2 = (vectorX * cos(-angle) - vectorY * sin(-angle)) * len / vectorLen
 	val rotatedVectorY2 = (vectorX * sin(-angle) + vectorY * cos(-angle)) * len / vectorLen
 	canvas.drawLine(x1 - rotatedVectorX2, y1 - rotatedVectorY2, x1, y1, paint)
-}
-
-private fun getNearestRoundNumber(value: Float): Float {
-	val roundNumbers = (-10..10).map { listOf(10f.pow(it), 10f.pow(it) * 2, 10f.pow(it) * 5) }.flatten()
-	return roundNumbers.minByOrNull { abs(it - value) } ?: 1f
 }

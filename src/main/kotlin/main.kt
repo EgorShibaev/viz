@@ -11,6 +11,8 @@ import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import javax.swing.WindowConstants
 import kotlin.io.path.Path
+import kotlin.math.abs
+import kotlin.math.pow
 
 fun main(args: Array<String>) {
 	val commandLine = processCommandLine(args) ?: return
@@ -32,7 +34,7 @@ class PlotCell(val x: Float, val y: Float, val name: String, val detailedInfo: S
 class ChartCell(val value: Float, val name: String, val detailedInfo: String) : Cell()
 
 enum class Diagram {
-	CIRCLE, BAR_CHART, PLOT
+	CIRCLE, BAR_CHART, PLOT, POLAR_CHART
 }
 
 fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
@@ -50,6 +52,11 @@ fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
 		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
 	channel.write(pngBytes)
 	channel.close()
+}
+
+fun getNearestRoundNumber(value: Float): Float {
+	val roundNumbers = (-10..10).map { listOf(10f.pow(it), 10f.pow(it) * 2, 10f.pow(it) * 5) }.flatten()
+	return roundNumbers.minByOrNull { abs(it - value) } ?: 1f
 }
 
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {

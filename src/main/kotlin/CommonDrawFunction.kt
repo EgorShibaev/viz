@@ -1,6 +1,7 @@
 import diagram.barChart.barChart
 import diagram.circleDiagram.separatedCircle
 import diagram.plot.plot
+import diagram.polarChart.polarChart
 import fontsAndPaints.paint
 import org.jetbrains.skija.*
 import kotlin.math.max
@@ -10,7 +11,7 @@ import kotlin.math.sqrt
 
 fun getTextWidth(text: String, font: Font) = text.length * font.size * 0.6f
 
-fun drawWithByRight(canvas: Canvas, text: String, right: Float, y: Float, font: Font, paint: Paint) {
+fun drawByRightSide(canvas: Canvas, text: String, right: Float, y: Float, font: Font, paint: Paint) {
 	canvas.drawString(text, right - getTextWidth(text, font), y, font, paint)
 }
 
@@ -64,12 +65,16 @@ fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h:
 			canvas, Rect(w / 100f, h / 100f, w - 10F, h - 10F),
 			content.map { it as PlotCell }
 		)
+		Diagram.POLAR_CHART -> polarChart(
+			canvas, w / 2, h / 2, min(w / 2F, h / 2F) - 50F,
+			content.map { it as ChartCell }
+		)
 	}
 }
 
 fun checkIsContentCorrect(type: Diagram, content: List<Cell>) {
 	when (type) {
 		Diagram.PLOT -> assert(content.all { it is PlotCell })
-		Diagram.CIRCLE, Diagram.BAR_CHART -> assert(content.all { it is ChartCell })
+		Diagram.CIRCLE, Diagram.BAR_CHART, Diagram.POLAR_CHART -> assert(content.all { it is ChartCell })
 	}
 }

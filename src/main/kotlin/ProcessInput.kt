@@ -35,7 +35,7 @@ fun getPlotCell(line: List<String>): PlotCell? = when {
 }
 
 fun getCell(type: Diagram, line: List<String>) = when (type) {
-	Diagram.CIRCLE, Diagram.BAR_CHART -> getChartCell(line)
+	Diagram.CIRCLE, Diagram.BAR_CHART, Diagram.POLAR_CHART -> getChartCell(line)
 	Diagram.PLOT -> getPlotCell(line)
 }
 
@@ -50,6 +50,7 @@ fun processCommandLine(args: Array<String>): CommandLine? {
 		"circle", "circlediagram" -> Diagram.CIRCLE
 		"barchart", "bar_chart" -> Diagram.BAR_CHART
 		"plot" -> Diagram.PLOT
+		"polarchart", "polar" -> Diagram.POLAR_CHART
 		else -> {
 			println("Unknown diagram type")
 			return null
