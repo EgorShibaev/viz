@@ -163,12 +163,14 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 private fun drawGrid(canvas: Canvas, step: Float, rect: Rect) {
 	drawVerticallyGrid(canvas, rect, step)
 	drawHorizontallyGrid(canvas, step, rect)
+	if (0f in State.x0..State.x1 && 0f in State.y0..State.y1)
+		canvas.drawString("0", convertPlotX(0f, rect), convertPlotY(0f, rect) - 1f, thinFont, paint)
 }
 
 private fun drawHorizontallyGrid(canvas: Canvas, step: Float, rect: Rect) {
 	val startY = ceil(State.y0 / step).toInt()
 	val finishY = floor(State.y1 / step).toInt()
-	for (horizontal in startY..finishY) {
+	for (horizontal in (startY..finishY) - 0) {
 		val screenY = convertPlotY(horizontal * step, rect)
 		canvas.drawLine(rect.left, screenY, rect.right, screenY, thinStroke)
 		val inscription = (step * horizontal).toString()
@@ -183,7 +185,7 @@ private fun drawHorizontallyGrid(canvas: Canvas, step: Float, rect: Rect) {
 private fun drawVerticallyGrid(canvas: Canvas, rect: Rect, step: Float) {
 	val startX = ceil(State.x0 / step).toInt()
 	val finishX = floor(State.x1 / step).toInt()
-	for (vertical in startX..finishX) {
+	for (vertical in (startX..finishX) - 0) {
 		val screenX = convertPlotX(step * vertical, rect)
 		canvas.drawLine(screenX, rect.top, screenX, rect.bottom, thinStroke)
 		val inscription = (step * vertical).toString()

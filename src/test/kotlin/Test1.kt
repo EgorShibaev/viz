@@ -4,6 +4,6 @@ internal class Test1 {
 
     @Test
     fun test1() {
-        assert(true)
+        main(arrayOf("plot", "input.txt", "output.png"))
     }
 }
