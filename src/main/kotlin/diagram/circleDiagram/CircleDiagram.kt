@@ -1,3 +1,11 @@
+package diagram.circleDiagram
+
+import ChartCell
+import State
+import distance
+import drawStringInRect
+import fontsAndPaints.*
+import getTextWidth
 import org.jetbrains.skija.Canvas
 import org.jetbrains.skija.Rect
 import kotlin.math.*

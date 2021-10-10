@@ -1,3 +1,7 @@
+import diagram.barChart.barChart
+import diagram.circleDiagram.separatedCircle
+import diagram.plot.plot
+import fontsAndPaints.paint
 import org.jetbrains.skija.*
 import kotlin.math.max
 import kotlin.math.min

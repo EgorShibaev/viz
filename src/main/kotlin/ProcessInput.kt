@@ -1,8 +1,4 @@
-import org.jetbrains.skija.*
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardOpenOption
-import kotlin.io.path.Path
 
 fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {
 	val content = readInputFile(commandLine.inputFile) ?: return null
@@ -14,41 +10,39 @@ fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {
 	)
 }
 
-fun getCell(type: Diagram, line: List<String>): Cell? {
-	when (type) {
-		Diagram.CIRCLE, Diagram.BAR_CHART -> {
-			when {
-				line.size != 3 -> {
-					println("3 arguments expected")
-					return null
-				}
-				line[1].toFloatOrNull() == null ->  {
-					println("Float expected")
-					return null
-				}
-			}
-			return ChartCell(line[1].toFloat(), line[0], line[2])
-		}
-		Diagram.PLOT -> {
-			when {
-				line.size != 4 -> {
-					println("4 arguments expected")
-					return null
-				}
-				line[0].toFloatOrNull() == null || line[1].toFloatOrNull() == null -> {
-					println("Float expected")
-					return null
-				}
-			}
-			return PlotCell(line[0].toFloat(), line[1].toFloat(), line[2], line[3])
-		}
+fun getChartCell(line: List<String>): ChartCell? = when {
+	line.size != 3 -> {
+		println("3 arguments expected")
+		null
 	}
+	line[1].toFloatOrNull() == null -> {
+		println("Float expected")
+		null
+	}
+	else -> ChartCell(line[1].toFloat(), line[0], line[2])
+}
+
+fun getPlotCell(line: List<String>): PlotCell? = when {
+	line.size != 4 -> {
+		println("4 arguments expected")
+		null
+	}
+	line[0].toFloatOrNull() == null || line[1].toFloatOrNull() == null -> {
+		println("Float expected")
+		null
+	}
+	else -> PlotCell(line[0].toFloat(), line[1].toFloat(), line[2], line[3])
+}
+
+fun getCell(type: Diagram, line: List<String>) = when (type) {
+	Diagram.CIRCLE, Diagram.BAR_CHART -> getChartCell(line)
+	Diagram.PLOT -> getPlotCell(line)
 }
 
 data class CommandLine(val inputFile: String, val outputFile: String, val type: Diagram)
 
 fun processCommandLine(args: Array<String>): CommandLine? {
-	if (args.size !in 2..3){
+	if (args.size !in 2..3) {
 		println("Three or two arguments expected")
 		return null
 	}
@@ -68,7 +62,7 @@ fun processCommandLine(args: Array<String>): CommandLine? {
 }
 
 fun readInputFile(inputFile: String): List<List<String>>? {
-	if (!File(inputFile).exists()){
+	if (!File(inputFile).exists()) {
 		println("file $inputFile does not exist")
 		return null
 	}
@@ -82,21 +76,4 @@ fun readInputFile(inputFile: String): List<List<String>>? {
 fun parseFileLine(line: String): List<String> {
 	val separator = ','
 	return line.split(separator)
-}
-
-fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
-	val w = 1500
-	val h = 1000
-	val surface = Surface.makeRasterN32Premul(w, h)
-	val canvas = surface.canvas
-	canvas.drawRect(Rect(0f, 0f, w.toFloat(), h.toFloat()), Paint().apply { color = 0xffffffff.toInt() })
-	drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
-	val image : Image = surface.makeImageSnapshot()
-	val pngData = image.encodeToData(EncodedImageFormat.PNG)!!
-	val pngBytes = pngData.toByteBuffer()
-	val path = Path(outputFIle)
-	val channel = Files.newByteChannel(path,
-		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
-	channel.write(pngBytes)
-	channel.close()
 }

@@ -7,8 +7,10 @@ import org.jetbrains.skiko.SkiaRenderer
 import org.jetbrains.skiko.SkiaWindow
 import java.awt.Dimension
 import java.awt.event.*
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 import javax.swing.WindowConstants
-import kotlin.math.*
+import kotlin.io.path.Path
 
 fun main(args: Array<String>) {
 	val commandLine = processCommandLine(args) ?: return
@@ -31,6 +33,23 @@ class ChartCell(val value: Float, val name: String, val detailedInfo: String) : 
 
 enum class Diagram {
 	CIRCLE, BAR_CHART, PLOT
+}
+
+fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
+	val w = 1500
+	val h = 1000
+	val surface = Surface.makeRasterN32Premul(w, h)
+	val canvas = surface.canvas
+	canvas.drawRect(Rect(0f, 0f, w.toFloat(), h.toFloat()), Paint().apply { color = 0xffffffff.toInt() })
+	drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
+	val image : Image = surface.makeImageSnapshot()
+	val pngData = image.encodeToData(EncodedImageFormat.PNG)!!
+	val pngBytes = pngData.toByteBuffer()
+	val path = Path(outputFIle)
+	val channel = Files.newByteChannel(path,
+		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
+	channel.write(pngBytes)
+	channel.close()
 }
 
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
@@ -82,39 +101,4 @@ object State {
 	var vectorToMoveY = 0f
 	var lastDraggedX: Float? = null
 	var lastDraggedY: Float? = null
-}
-
-object MyMouseMotionAdapter : MouseMotionAdapter() {
-	override fun mouseMoved(event: MouseEvent) {
-		State.mouseX = event.x.toFloat()
-		State.mouseY = event.y.toFloat()
-	}
-
-	override fun mouseDragged(e: MouseEvent?) {
-		e?.apply {
-			val lastX = State.lastDraggedX
-			val lastY = State.lastDraggedY
-			if (lastX == null || lastY == null || abs(lastX - x) > 20f || abs(lastY - y) > 20f) {
-				State.lastDraggedX = x.toFloat()
-				State.lastDraggedY = y.toFloat()
-			} else {
-				State.vectorToMoveX += x - lastX
-				State.vectorToMoveY += y - lastY
-				State.lastDraggedX = x.toFloat()
-				State.lastDraggedY = y.toFloat()
-			}
-		}
-	}
-}
-
-object MyMouseWheelListener : MouseWheelListener {
-	override fun mouseWheelMoved(e: MouseWheelEvent?) {
-		State.e = e
-	}
-}
-
-object MyKeyAdapter : KeyAdapter() {
-	override fun keyPressed(e: KeyEvent?) {
-		State.pressedKeyCode = e?.keyCode
-	}
 }

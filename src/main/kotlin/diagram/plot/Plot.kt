@@ -1,3 +1,11 @@
+package diagram.plot
+
+import PlotCell
+import State
+import distance
+import drawStringInRect
+import drawWithByRight
+import fontsAndPaints.*
 import org.jetbrains.skija.*
 import kotlin.math.*
 

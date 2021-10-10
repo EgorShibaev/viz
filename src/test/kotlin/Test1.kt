@@ -4,7 +4,7 @@ internal class Test1 {
 
     @Test
     fun testPlot() {
-        main(arrayOf("plot", "tests/Plot/input.txt", "tests/Plot/output.png"))
+        main(arrayOf("diagram.plot.plot", "tests/Plot/input.txt", "tests/Plot/output.png"))
     }
 
     @Test

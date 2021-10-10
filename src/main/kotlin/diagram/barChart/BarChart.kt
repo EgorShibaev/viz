@@ -1,3 +1,9 @@
+package diagram.barChart
+
+import ChartCell
+import drawStringInRect
+import fontsAndPaints.*
+import getTextWidth
 import org.jetbrains.skija.Canvas
 import org.jetbrains.skija.Rect
 
