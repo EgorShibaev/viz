@@ -22,12 +22,12 @@ fun getCell(type: Diagram, line: List<String>): Cell? {
 					println("3 arguments expected")
 					return null
 				}
-				line[0].toFloatOrNull() == null ->  {
+				line[1].toFloatOrNull() == null ->  {
 					println("Float expected")
 					return null
 				}
 			}
-			return ChartCell(line[0].toFloat(), line[1], line[2])
+			return ChartCell(line[1].toFloat(), line[0], line[2])
 		}
 		Diagram.PLOT -> {
 			when {
@@ -85,7 +85,7 @@ fun parseFileLine(line: String): List<String> {
 }
 
 fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
-	val w = 1000
+	val w = 1500
 	val h = 1000
 	val surface = Surface.makeRasterN32Premul(w, h)
 	val canvas = surface.canvas
