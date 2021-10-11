@@ -1,4 +1,8 @@
-september,123,additional info for september
-october,356,additional info for october
-november,13,additional info for november
-december,100,additional info for december
+USA,45208327,Coronavirus Cases:45209469 Deaths: 733649 Recovered: 34674568
+India,33984466,Coronavirus Cases: 33984466 Deaths: 450991 Recovered: 33312443
+Brazil,21575820,Coronavirus Cases: 21575820 Deaths: 601047 Recovered: 20678858
+UK,8193769,Coronavirus Cases: 8193769 Deaths: 137763 Recovered: 6686695
+Russia,7804774,Coronavirus Cases: 7804774 Deaths: 217372 Recovered: 6873579
+Turkey,7475115,Coronavirus Cases: 7475115 Deaths: 66368 Recovered: 6927337
+France,7057631,Coronavirus Cases: 7057631 Deaths: 117082 Recovered: 5162757
+Iran,5716394,Coronavirus Cases: 5716394 Deaths: 122868 Recovered: 5234010

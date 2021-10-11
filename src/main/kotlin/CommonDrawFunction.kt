@@ -1,7 +1,7 @@
-import diagram.barChart.barChart
-import diagram.circleDiagram.separatedCircle
+import diagram.barChart
+import diagram.separatedCircle
 import diagram.plot.plot
-import diagram.polarChart.polarChart
+import diagram.polarChart
 import fontsAndPaints.paint
 import org.jetbrains.skija.*
 import kotlin.math.max

@@ -1,4 +1,4 @@
-package diagram.polarChart
+package diagram
 
 import ChartCell
 import distance

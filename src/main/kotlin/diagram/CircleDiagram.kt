@@ -1,4 +1,4 @@
-package diagram.circleDiagram
+package diagram
 
 import ChartCell
 import State

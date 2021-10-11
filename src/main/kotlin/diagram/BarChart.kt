@@ -1,4 +1,4 @@
-package diagram.barChart
+package diagram
 
 import ChartCell
 import drawStringInRect

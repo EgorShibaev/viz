@@ -67,14 +67,33 @@ fun readInputFile(inputFile: String): List<List<String>>? {
 		println("file $inputFile does not exist")
 		return null
 	}
-	val res = mutableListOf<List<String>>()
-	File(inputFile).forEachLine {
-		res.add(parseFileLine(it))
+	return File(inputFile).readLines().map {
+		parseFileLine(it) ?: return null
 	}
-	return res.toList()
 }
 
-fun parseFileLine(line: String): List<String> {
+fun getCharForSeparate(text: String): Char? {
+	val set = text.toSet()
+	for (ch in Char.MIN_VALUE..Char.MAX_VALUE)
+		if (ch !in set)
+			return ch
+	// if we are here text unlikely has any sense
+	println("Incorrect line in input file: $text")
+	return null
+}
+
+fun parseFileLine(line: String): List<String>? {
 	val separator = ','
-	return line.split(separator)
+	val newSeparator = getCharForSeparate(line) ?: return null
+	val quotes = '"'
+	var isQuote = false
+	val lineWithNewSeparator = line.withIndex().map {
+		if (it.value == quotes)
+			isQuote = !isQuote
+		when {
+			isQuote || it.value != separator -> it.value
+			else -> newSeparator
+		}
+	}.joinToString(separator = "")
+	return lineWithNewSeparator.split(newSeparator)
 }

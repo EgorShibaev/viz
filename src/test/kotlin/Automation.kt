@@ -1,10 +1,10 @@
 import kotlin.test.*
 
-internal class Test1 {
+internal class Automation {
 
     @Test
     fun testPlot() {
-        main(arrayOf("diagram.plot.plot", "tests/Plot/input.txt", "tests/Plot/output.png"))
+        main(arrayOf("plot", "tests/Plot/input.txt", "tests/Plot/output.png"))
     }
 
     @Test
@@ -15,5 +15,10 @@ internal class Test1 {
     @Test
     fun testCircle() {
         main(arrayOf("circle", "tests/Circle/input.txt", "tests/Circle/output.png"))
+    }
+
+    @Test
+    fun testPolar() {
+        main(arrayOf("polar", "tests/polar/input.txt", "tests/polar/output.png"))
     }
 }

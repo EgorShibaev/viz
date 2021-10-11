@@ -1,0 +1,5 @@
+Monday,3,programing fundamental; math; Linux basics
+Tuesday,2.5,math analysis; algebra
+Wednesday,4,math; algebra; english; english
+Thursday,1.5,math analysis
+Friday,1,programing fundamental
