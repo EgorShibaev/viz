@@ -17,6 +17,14 @@ import mu.KotlinLogging
 
 val logger = KotlinLogging.logger {}
 
+// arguments example (you can find in test/Automation but
+// these tests are only for check png files):
+//
+// plot tests/Plot/input.txt tests/Plot/output.png
+// barChart tests/BarChart/input.txt tests/BarChart/output.png
+// Circle tests/Circle/input.txt tests/Circle/output.png
+// Polar tests/Polar/input.txt tests/Polar/output.png
+
 fun main(args: Array<String>) {
 	val commandLine = processCommandLine(args) ?: return
 	val (type, content) = getContentFromFile(commandLine) ?: return
@@ -41,7 +49,7 @@ enum class Diagram {
 	CIRCLE, BAR_CHART, PLOT, POLAR_CHART
 }
 
-fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
+fun writeToFile(outputFile: String, type: Diagram, content: List<Cell>) {
 	val w = 1500
 	val h = 1000
 	val surface = Surface.makeRasterN32Premul(w, h)
@@ -51,7 +59,7 @@ fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
 	val image: Image = surface.makeImageSnapshot()
 	val pngData = image.encodeToData(EncodedImageFormat.PNG)!!
 	val pngBytes = pngData.toByteBuffer()
-	val path = Path(outputFIle)
+	val path = Path(outputFile)
 	val channel = Files.newByteChannel(
 		path,
 		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE

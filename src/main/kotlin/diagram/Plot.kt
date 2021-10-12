@@ -112,7 +112,6 @@ private fun processWheelRotation(rect: Rect) {
 private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
 	val x = convertScreenX(State.mouseX, rect)
 	val y = convertScreenY(State.mouseY, rect)
-	assert(x >= 0 && y >= 0)
 	val zoomFactor = 0.95f
 	val currentFactor = if (preciseWheelRotation == 1f) zoomFactor else 1f / zoomFactor
 	State.x1 = x + (State.x1 - x) * currentFactor

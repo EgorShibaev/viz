@@ -10,8 +10,10 @@ import org.jetbrains.skija.Canvas
 import org.jetbrains.skija.Rect
 import kotlin.math.*
 
-private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, val text: String,
-								  val centerX: Float, val centerY: Float, val r: Float, val info: String) {
+data class DiagramSegment(
+	val beginAngle: Float, val endAngle: Float, val text: String,
+	val centerX: Float, val centerY: Float, val r: Float, val info: String
+) {
 	fun draw(canvas: Canvas) {
 		val sweepAngle = endAngle - beginAngle
 		drawArcInCircle(canvas, centerX, centerY, r, beginAngle, sweepAngle)
@@ -25,18 +27,24 @@ private data class DiagramSegment(val beginAngle: Float, val endAngle: Float, va
 	}
 
 	fun getAngle(x: Float, y: Float): Float {
+		fun angleToDefaultRange(angle: Float): Float {
+			var res = angle
+			while (res < 0)
+				res += PI.toFloat() * 2
+			while (res >= PI.toFloat() * 2)
+				res -= PI.toFloat() * 2
+			return res
+		}
+
 		val vectorX = x - centerX
 		val vectorY = y - centerY
-		val vectorSin = vectorX / distance(0f, 0f, vectorX, vectorY)
-		val vectorCos = vectorY / distance(0f, 0f, vectorX, vectorY)
-		val angle = if (vectorCos > 0)
-			PI.toFloat() - asin(vectorSin)
+		val vectorSin = vectorY / distance(0f, 0f, vectorX, vectorY)
+		val vectorCos = vectorX / distance(0f, 0f, vectorX, vectorY)
+		val angle = if (vectorCos < 0)
+			PI.toFloat() - asin(vectorSin) + PI.toFloat() / 2
 		else
-			asin(vectorSin)
-		return if (angle > 0)
-			angle
-		else
-			angle + PI.toFloat() * 2
+			asin(vectorSin) + PI.toFloat() / 2
+		return angleToDefaultRange(angle)
 	}
 
 	fun checkInSegment(x: Float, y: Float): Boolean {
