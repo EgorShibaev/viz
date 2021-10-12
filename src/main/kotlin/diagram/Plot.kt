@@ -1,4 +1,4 @@
-package diagram.plot
+package diagram
 
 import PlotCell
 import State

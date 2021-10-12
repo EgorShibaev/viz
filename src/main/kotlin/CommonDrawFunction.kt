@@ -1,6 +1,6 @@
 import diagram.barChart
 import diagram.separatedCircle
-import diagram.plot.plot
+import diagram.plot
 import diagram.polarChart
 import fontsAndPaints.paint
 import org.jetbrains.skija.*

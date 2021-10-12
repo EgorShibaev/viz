@@ -73,6 +73,14 @@ fun getNearestRoundNumber(value: Float): Float {
 	return roundNumbers.minByOrNull { abs(it - value) } ?: 1f
 }
 
+fun getRoundNumberMore(value: Float): Float {
+	val roundNumbers = (-10..10).map {
+		val round = 10f.pow(it)
+		(1..9).map { firstDigit -> round * firstDigit }
+	}.flatten()
+	return roundNumbers.firstOrNull { it > value } ?: value
+}
+
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
 	val window = SkiaWindow()
 	window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
