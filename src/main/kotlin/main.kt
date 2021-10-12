@@ -23,7 +23,8 @@ fun main(args: Array<String>) {
 
 open class Cell
 
-class PlotCell(val x: Float, val y: Float, val name: String, val detailedInfo: String) : Cell(), Comparable<PlotCell> {
+data class PlotCell(val x: Float, val y: Float, val name: String, val detailedInfo: String) :
+	Cell(), Comparable<PlotCell> {
 	override operator fun compareTo(other: PlotCell): Int = when {
 		x > other.x -> 1
 		x == other.x -> y.compareTo(other.y)
@@ -31,7 +32,7 @@ class PlotCell(val x: Float, val y: Float, val name: String, val detailedInfo: S
 	}
 }
 
-class ChartCell(val value: Float, val name: String, val detailedInfo: String) : Cell()
+data class ChartCell(val value: Float, val name: String, val detailedInfo: String) : Cell()
 
 enum class Diagram {
 	CIRCLE, BAR_CHART, PLOT, POLAR_CHART
@@ -44,12 +45,14 @@ fun writeToFile(outputFIle: String, type: Diagram, content: List<Cell>) {
 	val canvas = surface.canvas
 	canvas.drawRect(Rect(0f, 0f, w.toFloat(), h.toFloat()), Paint().apply { color = 0xffffffff.toInt() })
 	drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
-	val image : Image = surface.makeImageSnapshot()
+	val image: Image = surface.makeImageSnapshot()
 	val pngData = image.encodeToData(EncodedImageFormat.PNG)!!
 	val pngBytes = pngData.toByteBuffer()
 	val path = Path(outputFIle)
-	val channel = Files.newByteChannel(path,
-		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
+	val channel = Files.newByteChannel(
+		path,
+		StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE
+	)
 	channel.write(pngBytes)
 	channel.close()
 }
