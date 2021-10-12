@@ -13,6 +13,9 @@ import javax.swing.WindowConstants
 import kotlin.io.path.Path
 import kotlin.math.abs
 import kotlin.math.pow
+import mu.KotlinLogging
+
+val logger = KotlinLogging.logger {}
 
 fun main(args: Array<String>) {
 	val commandLine = processCommandLine(args) ?: return

@@ -15,7 +15,7 @@ data class CommandLine(val inputFile: String, val outputFile: String, val type: 
 
 fun processCommandLine(args: Array<String>): CommandLine? {
 	if (args.size !in 2..3) {
-		println("Three or two arguments expected")
+		logger.error { "Three or two arguments expected" }
 		return null
 	}
 	val type = when (args[0].lowercase()) {
@@ -24,7 +24,7 @@ fun processCommandLine(args: Array<String>): CommandLine? {
 		"plot" -> Diagram.PLOT
 		"polarchart", "polar" -> Diagram.POLAR_CHART
 		else -> {
-			println("Unknown diagram type")
+			logger.error { "Unknown diagram type" }
 			return null
 		}
 	}
@@ -37,11 +37,11 @@ fun processCommandLine(args: Array<String>): CommandLine? {
 
 fun getChartCell(line: List<String>): ChartCell? = when {
 	line.size != 3 -> {
-		println("3 arguments expected")
+		logger.error {"3 arguments expected" }
 		null
 	}
 	line[1].toFloatOrNull() == null -> {
-		println("Float expected")
+		logger.error { "Float expected" }
 		null
 	}
 	else -> ChartCell(line[1].toFloat(), line[0], line[2])
@@ -49,11 +49,11 @@ fun getChartCell(line: List<String>): ChartCell? = when {
 
 fun getPlotCell(line: List<String>): PlotCell? = when {
 	line.size != 4 -> {
-		println("4 arguments expected")
+		logger.error { "4 arguments expected" }
 		null
 	}
 	line[0].toFloatOrNull() == null || line[1].toFloatOrNull() == null -> {
-		println("Float expected")
+		logger.error { "Float expected" }
 		null
 	}
 	else -> PlotCell(line[0].toFloat(), line[1].toFloat(), line[2], line[3])
@@ -66,7 +66,7 @@ fun getCell(type: Diagram, line: List<String>) = when (type) {
 
 fun readInputFile(inputFile: String): List<List<String>>? {
 	if (!File(inputFile).exists()) {
-		println("file $inputFile does not exist")
+		logger.error { "file $inputFile does not exist" }
 		return null
 	}
 	return File(inputFile).readLines().map {
@@ -80,7 +80,7 @@ fun getCharForSeparate(text: String): Char? {
 		if (ch !in set)
 			return ch
 	// if we are here text unlikely has any sense
-	println("Incorrect line in input file: $text")
+	logger.error { "Incorrect line in input file: $text" }
 	return null
 }
 
