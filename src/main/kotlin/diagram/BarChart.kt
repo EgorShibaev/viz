@@ -6,16 +6,25 @@ import fontsAndPaints.*
 import getTextWidth
 import org.jetbrains.skija.Canvas
 import org.jetbrains.skija.Rect
+import kotlin.math.pow
 
 fun barChart(canvas: Canvas, rect: Rect, content: List<ChartCell>) {
 	assert(content.all { it.value >= 0 })
-	val max = content.maxOf { it.value }
+	val max = getRoundNumberMore(content.maxOf { it.value })
 	val leftIndent = 80f
 	// widthOfColumn * cnt + widthOfColumn / 2 * (cnt - 1) = width
 	val widthOfColumn = (rect.right - (rect.left + leftIndent)) / (1.5F * content.size - 0.5F)
 	val factor = (rect.bottom - font.size - 5F - (rect.top + font.size + 5F)) / max
 	verticalLines(canvas, max, rect, factor)
 	drawColumns(canvas, Rect(rect.left + leftIndent, rect.top, rect.right, rect.bottom), widthOfColumn, factor, content)
+}
+
+fun getRoundNumberMore(value: Float): Float {
+	val roundNumbers = (-10..10).map {
+		val round = 10f.pow(it)
+		(1..9).map { firstDigit -> round * firstDigit }
+	}.flatten()
+	return roundNumbers.firstOrNull { it > value } ?: value
 }
 
 private fun verticalLines(canvas: Canvas, max: Float, rect: Rect, factor: Float) {
@@ -40,13 +49,13 @@ private fun verticalLines(canvas: Canvas, max: Float, rect: Rect, factor: Float)
 
 data class Column(val rect: Rect, val name: String, val value: Float, val info: String) {
 	fun draw(canvas: Canvas) {
-		canvas.drawRect(rect, randomColor(rect.bottom - rect.top))
+		canvas.drawRect(rect, randomColor(value))
 		canvas.drawRect(rect, stroke)
 		canvas.drawString(
 			name, (rect.right + rect.left) / 2 - getTextWidth(name, font) / 2F, rect.bottom + font.size, font, paint
 		)
 		canvas.drawString(
-			value.toString(), (rect.right + rect.left) / 2- getTextWidth(value.toString(), font) / 2F,
+			value.toString(), (rect.right + rect.left) / 2 - getTextWidth(value.toString(), font) / 2F,
 			rect.bottom - 3f, font, paint
 		)
 	}
