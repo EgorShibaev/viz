@@ -35,17 +35,20 @@ private fun getScreenCells(content: List<ChartCell>, radius: Float, max: Float, 
 	content.withIndex().map {
 		val chartCell = it.value
 		val currRadius = radius * chartCell.value / max
+		// calculate angle and rotate it
 		val angle = Math.PI.toFloat() * 2 / content.size * it.index - Math.PI.toFloat() / 2
 		val x = centerX + cos(angle) * currRadius
 		val y = centerY + sin(angle) * currRadius
 		ScreenCell(x, y, chartCell)
 	}
 
+/**
+ * In this function segments between points are drawn.
+ * For each pair program draw segment between them and filled triangle.
+ * */
 private fun drawPolygon(canvas: Canvas, centerX: Float, centerY: Float, screenCells: List<ScreenCell>) {
-	for (branch in screenCells.indices) {
-		val next = (branch + 1) % screenCells.size
-		val currCell = screenCells[branch]
-		val nextCell = screenCells[next]
+	val screenCellsPairs = (screenCells + screenCells[0]).windowed(2, 1, false)
+	screenCellsPairs.forEach { (currCell, nextCell) ->
 		val coordinates =
 			arrayOf(Point(centerX, centerY), Point(currCell.x, currCell.y), Point(nextCell.x, nextCell.y))
 		canvas.drawTriangles(coordinates, null, Paint().apply {
@@ -64,6 +67,7 @@ fun drawValue(
 	screenCells.forEach {
 		canvas.drawCircle(it.x, it.y, 5f, randomColor(it.cell.value))
 		if (distance(it.x, it.y, State.mouseX, State.mouseY) <= 5f) {
+			// if user points to this point program circle it and write additional info
 			canvas.drawCircle(it.x, it.y, 7f, Paint().apply {
 				color = 0xff0000ff.toInt()
 				mode = PaintMode.STROKE
@@ -92,6 +96,10 @@ fun drawGrid(
 	}
 }
 
+/**
+ * This function return regular polygon with center in (centerX, centerY).
+ * unitNumber is count of sides.
+ * */
 fun getPolygon(centerX: Float, centerY: Float, radius: Float, unitNumber: Int) =
 	(0 until unitNumber).map {
 		val angle = Math.PI.toFloat() * 2 / unitNumber * it - Math.PI.toFloat() / 2

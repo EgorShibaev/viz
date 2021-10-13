@@ -84,13 +84,18 @@ fun getCharForSeparate(text: String): Char? {
 	return null
 }
 
+/**
+ * This function split line by commas, but program ignore commas in quotes.
+ * Firstly, program find all commas out of quotes and then change it to a new separator.
+ * New separator is char that not contain in string. Finally, program split line by new separator.
+ * */
 fun parseFileLine(line: String): List<String>? {
 	val separator = ','
 	val newSeparator = getCharForSeparate(line) ?: return null
-	val quotes = '"'
+	val quotes = setOf('"', '\'')
 	var isQuote = false
 	val lineWithNewSeparator = line.withIndex().map {
-		if (it.value == quotes)
+		if (it.value in quotes)
 			isQuote = !isQuote
 		when {
 			isQuote || it.value != separator -> it.value

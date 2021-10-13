@@ -26,7 +26,11 @@ data class DiagramSegment(
 		canvas.drawString(text, xForText, yForText, font, paint)
 	}
 
+	/**
+	 * calculate angle relatively center of diagram
+	 * */
 	fun getAngle(x: Float, y: Float): Float {
+		// return angle in range [0; 2 * pi) which equals to argument
 		fun angleToDefaultRange(angle: Float): Float {
 			var res = angle
 			while (res < 0)
@@ -40,6 +44,7 @@ data class DiagramSegment(
 		val vectorY = y - centerY
 		val vectorSin = vectorY / distance(0f, 0f, vectorX, vectorY)
 		val vectorCos = vectorX / distance(0f, 0f, vectorX, vectorY)
+		// + pi / 2 because program should start draw at top.
 		val angle = if (vectorCos < 0)
 			PI.toFloat() - asin(vectorSin) + PI.toFloat() / 2
 		else
@@ -54,23 +59,9 @@ data class DiagramSegment(
 	}
 }
 
-fun drawArcInCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, beginAngle: Float, sweepAngle: Float) {
-	canvas.drawArc(
-		centerX - r, centerY - r, centerX + r, centerY + r,
-		toDegree(beginAngle) - 90F, toDegree(sweepAngle), true, randomColor(sweepAngle)
-	)
-}
-
 fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, content: List<ChartCell>) {
 	assert(content.all { it.value >= 0 })
-	val sum = content.sumOf { it.value.toDouble() }.toFloat()
-	var angle = 0F
-	val diagramSegments = content.map {
-		val sweepAngle = it.value / sum * Math.PI.toFloat() * 2
-		val text = "${it.name} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
-		angle += sweepAngle
-		DiagramSegment(angle - sweepAngle, angle, text, centerX, centerY, r, it.detailedInfo)
-	}
+	val diagramSegments = getDiagramSegments(centerX, centerY, r, content)
 	diagramSegments.forEach {
 		it.draw(canvas)
 		lineInCircle(canvas, centerX, centerY, r, it.endAngle)
@@ -82,6 +73,20 @@ fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, co
 	canvas.drawCircle(centerX, centerY, r, stroke)
 }
 
+/**
+ * This function for each segment calculate begin and end angles and create DiagramSegment
+ * */
+fun getDiagramSegments(centerX: Float, centerY: Float, radius: Float, content: List<ChartCell>): List<DiagramSegment> {
+	val sum = content.sumOf { it.value.toDouble() }.toFloat()
+	var angle = 0F
+	return content.map {
+		val sweepAngle = it.value / sum * Math.PI.toFloat() * 2
+		val text = "${it.name} - ${it.value} (${(it.value / sum * 100).toInt()}%)"
+		angle += sweepAngle
+		DiagramSegment(angle - sweepAngle, angle, text, centerX, centerY, radius, it.detailedInfo)
+	}
+}
+
 private fun toDegree(angleInRadian: Float) = angleInRadian / Math.PI.toFloat() * 180F
 
 private fun lineInCircle(canvas: Canvas, centerX: Float, centerY: Float, length: Float, angle: Float) {
@@ -90,5 +95,12 @@ private fun lineInCircle(canvas: Canvas, centerX: Float, centerY: Float, length:
 		centerX + length * sin(angle),
 		centerY - length * cos(angle),
 		stroke
+	)
+}
+
+fun drawArcInCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, beginAngle: Float, sweepAngle: Float) {
+	canvas.drawArc(
+		centerX - r, centerY - r, centerX + r, centerY + r,
+		toDegree(beginAngle) - 90F, toDegree(sweepAngle), true, randomColor(sweepAngle)
 	)
 }

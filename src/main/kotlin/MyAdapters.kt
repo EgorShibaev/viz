@@ -7,19 +7,25 @@ object MyMouseMotionAdapter : MouseMotionAdapter() {
 		State.mouseY = event.y.toFloat()
 	}
 
+	/**
+	 * This method is called when mouse is dragged. It is used for plot moving.
+	 * This method works with four variables in State: lastDraggedX, lastDraggedY, vectorToMoveX, vectorToMoveY
+	 * If distance between point with last coordinates and current position is small,
+	 * program believe that mouse was dragged from (lastDraggedX; lastDraggedY) to current position.
+	 * Then program add vector which connect last and current point to vector (vectorToMoveX, vectorToMoveY).
+	 * The corresponding function in Plot.kt work with vectorToMoveX and vectorToMoveY.
+	 * */
 	override fun mouseDragged(e: MouseEvent?) {
 		e?.apply {
 			val lastX = State.lastDraggedX
 			val lastY = State.lastDraggedY
-			if (lastX == null || lastY == null || abs(lastX - x) > 20f || abs(lastY - y) > 20f) {
-				State.lastDraggedX = x.toFloat()
-				State.lastDraggedY = y.toFloat()
-			} else {
+			if (lastX != null && lastY != null && abs(lastX - x) < 20f && abs(lastY - y) < 20f) {
 				State.vectorToMoveX += x - lastX
 				State.vectorToMoveY += y - lastY
-				State.lastDraggedX = x.toFloat()
-				State.lastDraggedY = y.toFloat()
 			}
+			// update last cursor position
+			State.lastDraggedX = x.toFloat()
+			State.lastDraggedY = y.toFloat()
 		}
 	}
 }

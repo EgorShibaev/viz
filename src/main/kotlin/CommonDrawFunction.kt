@@ -11,22 +11,30 @@ import kotlin.math.sqrt
 
 fun getTextWidth(text: String, font: Font) = text.length * font.size * 0.6f
 
+/** Draw text so that right side is fixed */
 fun drawByRightSide(canvas: Canvas, text: String, right: Float, y: Float, font: Font, paint: Paint) {
 	canvas.drawString(text, right - getTextWidth(text, font), y, font, paint)
 }
 
+/**
+ * Program draw string in given rect.
+ * There is subfunction which calculate coordinates of each word in string.
+ * and draw it if corresponding flag is true. Firstly, program call this subfunction
+ * with flag false and draw rectangle with background for string.
+ * Secondly, program call subfunction with flag true and draw string.
+ * */
 fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
-	fun drawStringOrCalcSize(b : Boolean): Pair<Float, Float> {
+	fun drawStringOrCalcSize(shouldDraw: Boolean): Pair<Float, Float> {
 		var maxX = rect.left
 		var currX = rect.left
 		var currY = rect.top + font.size
 		val words = text.split(' ')
 		words.forEach {
-			if (currX + font.size * 0.6f * it.length > rect.right && currX != rect.left){
+			if (currX + font.size * 0.6f * it.length > rect.right && currX != rect.left) {
 				currX = rect.left
 				currY += font.size + 2f
 			}
-			if (b)
+			if (shouldDraw)
 				canvas.drawString(it, currX, currY, font, paint)
 			currX += font.size * 0.6f * (it.length + 1)
 			maxX = max(maxX, currX)
@@ -35,6 +43,7 @@ fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
 	}
 
 	val (bottom, right) = drawStringOrCalcSize(false)
+	// fill and stroke
 	canvas.drawRect(Rect(rect.left, rect.top, right, bottom + 2f), Paint().apply {
 		color = 0xcfcfcfff.toInt()
 	})
@@ -48,6 +57,9 @@ fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
 
 fun distance(x0: Float, y0: Float, x1: Float, y1: Float) = sqrt((x0 - x1).pow(2) + (y0 - y1).pow(2))
 
+/**
+ * Check if content correct, cast to corresponding type and then call corresponding function
+ * */
 fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h: Float) {
 	assert(content.isNotEmpty())
 	checkIsContentCorrect(type, content)

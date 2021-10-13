@@ -23,6 +23,11 @@ fun convertScreenY(screenY: Float, rect: Rect) =
 	State.y1 - (screenY - rect.top) / (rect.bottom - rect.top) * (State.y1 - State.y0)
 
 
+/**
+ * This function works when user change window size. Task of it function is to
+ * change State.x0/x1/y0/y1. Firstly, it assigned these parameters as min and max of values.
+ * Then function stretches visible space so that cell grid is square.
+ */
 private fun updateField(content: List<PlotCell>, rect: Rect) {
 	if (rect.right - rect.left != State.lastWidth || rect.bottom - rect.top != State.lastHeight) {
 		State.x0 = content.minOf { it.x } - 1
@@ -49,6 +54,10 @@ private fun updateField(content: List<PlotCell>, rect: Rect) {
 	}
 }
 
+/**
+ * MyMouseMotionAdapter change State.vectorToMove when mouse is dragged.
+ * This function process this changes.
+ * */
 private fun moveByMouse(rect: Rect) {
 	val deltaX = -State.vectorToMoveX / (rect.right - rect.left) * (State.x1 - State.x0)
 	val deltaY = State.vectorToMoveY / (rect.bottom - rect.top) * (State.y1 - State.y0)
@@ -80,6 +89,9 @@ private fun processPressedKey() {
 	State.pressedKeyCode = null
 }
 
+/**
+ * Move visible space if user pres corresponding key.
+ */
 private fun precessKeyCode(code: Int) {
 	val step = (State.x1 - State.x0) / 30f
 	when (code) {
@@ -102,6 +114,9 @@ private fun precessKeyCode(code: Int) {
 	}
 }
 
+/**
+ * Scratch visible space if user twist mouse wheel
+ */
 private fun processWheelRotation(rect: Rect) {
 	State.e?.let {
 		changeZoom(it.preciseWheelRotation.toFloat(), rect)
@@ -123,12 +138,12 @@ private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
 
 private fun drawSegments(canvas: Canvas, content: List<PlotCell>, rect: Rect) {
 	val sortedPoints = content.sorted()
-	for (pointIndex in 0 until sortedPoints.size - 1) {
+	sortedPoints.windowed(2, 1, false).forEach { (curr, next) ->
 		canvas.drawLine(
-			convertPlotX(sortedPoints[pointIndex].x, rect),
-			convertPlotY(sortedPoints[pointIndex].y, rect),
-			convertPlotX(sortedPoints[pointIndex + 1].x, rect),
-			convertPlotY(sortedPoints[pointIndex + 1].y, rect),
+			convertPlotX(curr.x, rect),
+			convertPlotY(curr.y, rect),
+			convertPlotX(next.x, rect),
+			convertPlotY(next.y, rect),
 			Paint().apply {
 				color = 0X6f0000a0
 				strokeWidth = 1.5f

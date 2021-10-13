@@ -17,13 +17,15 @@ import mu.KotlinLogging
 
 val logger = KotlinLogging.logger {}
 
-// arguments example (you can find in test/Automation but
-// these tests are only for check png files):
-//
-// plot tests/Plot/input.txt tests/Plot/output.png
-// barChart tests/BarChart/input.txt tests/BarChart/output.png
-// Circle tests/Circle/input.txt tests/Circle/output.png
-// Polar tests/Polar/input.txt tests/Polar/output.png
+/*
+* arguments example (you can find it in test/Automation but
+* these tests are only for check png files):
+*
+* plot tests/Plot/input.txt tests/Plot/output.png
+* barChart tests/BarChart/input.txt tests/BarChart/output.png
+* Circle tests/Circle/input.txt tests/Circle/output.png
+* Polar tests/Polar/input.txt tests/Polar/output.png
+* */
 
 fun main(args: Array<String>) {
 	val commandLine = processCommandLine(args) ?: return
@@ -32,10 +34,16 @@ fun main(args: Array<String>) {
 	createWindow(type.toString(), type, content)
 }
 
-open class Cell
 
-data class PlotCell(val x: Float, val y: Float, val name: String, val detailedInfo: String) :
-	Cell(), Comparable<PlotCell> {
+/**
+ * These classes contain info of each cell: name and detailedInfo for each
+ * cell, coordinates for PlotCell and value for ChartCell.
+ * PlotCell is used for plot. And ChartCell for others.
+ * */
+open class Cell(open val name: String, open val detailedInfo: String)
+
+data class PlotCell(val x: Float, val y: Float, override val name: String, override val detailedInfo: String) :
+	Cell(name, detailedInfo), Comparable<PlotCell> {
 	override operator fun compareTo(other: PlotCell): Int = when {
 		x > other.x -> 1
 		x == other.x -> y.compareTo(other.y)
@@ -43,7 +51,8 @@ data class PlotCell(val x: Float, val y: Float, val name: String, val detailedIn
 	}
 }
 
-data class ChartCell(val value: Float, val name: String, val detailedInfo: String) : Cell()
+data class ChartCell(val value: Float, override val name: String, override val detailedInfo: String) :
+	Cell(name, detailedInfo)
 
 enum class Diagram {
 	CIRCLE, BAR_CHART, PLOT, POLAR_CHART
@@ -70,12 +79,16 @@ fun writeToFile(outputFile: String, type: Diagram, content: List<Cell>) {
 
 fun getNearestRoundNumber(value: Float): Float {
 	val roundNumbers = (-10..10).map {
+		// add round numbers with 1, 2, 5 as first digits
+		// 1, 2, 5 was chosen because these numbers
+		// look good when divide by 10.
 		listOf(10.0.pow(it), 10.0.pow(it) * 2, 10.0.pow(it) * 5)
 	}.flatten().map { it.toFloat() }
 	return roundNumbers.minByOrNull { abs(it - value) } ?: 1f
 }
 
 fun getRoundNumberMore(value: Float): Float {
+	// roundNumbers contain numbers like d * (10 ^ p)
 	val roundNumbers = (-10..10).map {
 		val round = 10.0.pow(it)
 		(1..9).map { firstDigit -> round * firstDigit }
