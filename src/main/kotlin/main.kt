@@ -69,16 +69,18 @@ fun writeToFile(outputFile: String, type: Diagram, content: List<Cell>) {
 }
 
 fun getNearestRoundNumber(value: Float): Float {
-	val roundNumbers = (-10..10).map { listOf(10f.pow(it), 10f.pow(it) * 2, 10f.pow(it) * 5) }.flatten()
+	val roundNumbers = (-10..10).map {
+		listOf(10.0.pow(it), 10.0.pow(it) * 2, 10.0.pow(it) * 5)
+	}.flatten().map { it.toFloat() }
 	return roundNumbers.minByOrNull { abs(it - value) } ?: 1f
 }
 
 fun getRoundNumberMore(value: Float): Float {
 	val roundNumbers = (-10..10).map {
-		val round = 10f.pow(it)
+		val round = 10.0.pow(it)
 		(1..9).map { firstDigit -> round * firstDigit }
-	}.flatten()
-	return roundNumbers.firstOrNull { it > value } ?: value
+	}.flatten().map { it.toFloat() }
+	return roundNumbers.firstOrNull { it >= value } ?: value
 }
 
 fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlocking(Dispatchers.Swing) {
