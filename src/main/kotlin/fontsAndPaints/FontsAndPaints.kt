@@ -8,7 +8,7 @@ import kotlin.math.ln
 import kotlin.random.Random
 
 fun randomColor(seed: Float) = Paint().apply {
-	color = 0xFF000000.toInt() + Random(seed.hashCode()).nextInt() % 0x1000000
+	color = 0xFF000000.toInt() + Random(seed.toBits()).nextInt() % 0x1000000
 }
 
 private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
