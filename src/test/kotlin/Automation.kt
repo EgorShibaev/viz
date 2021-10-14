@@ -34,6 +34,6 @@ internal class Automation {
 
     @Test
     fun testPolar() {
-        write(arrayOf("polar", "tests/polar/input.txt", "tests/polar/output.png"))
+        write(arrayOf("polar", "tests/Polar/input.txt", "tests/Polar/output.png"))
     }
 }
