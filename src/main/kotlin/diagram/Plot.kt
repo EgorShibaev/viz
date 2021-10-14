@@ -10,63 +10,76 @@ import getNearestRoundNumber
 import org.jetbrains.skija.*
 import kotlin.math.*
 
-fun convertPlotX(plotX: Float, rect: Rect) =
-	rect.left + (plotX - State.x0) / (State.x1 - State.x0) * (rect.right - rect.left)
+/**
+ * This object contains State of field: x0, y0, x1, y1 : coordinates of visible space
+ * lastHeight, lastWidth - size of window in previous rendering
+ */
+private object PlotState {
+	var lastHeight = 0f
+	var lastWidth = 0f
+	var x0 = -10f
+	var y0 = -10f
+	var x1 = 10f
+	var y1 = 10f
+}
 
-fun convertPlotY(plotY: Float, rect: Rect) =
-	rect.bottom - (plotY - State.y0) / (State.y1 - State.y0) * (rect.bottom - rect.top)
+private fun convertPlotX(plotX: Float, rect: Rect) =
+	rect.left + (plotX - PlotState.x0) / (PlotState.x1 - PlotState.x0) * (rect.right - rect.left)
 
-fun convertScreenX(screenX: Float, rect: Rect) =
-	State.x0 + (screenX - rect.left) / (rect.right - rect.left) * (State.x1 - State.x0)
+private fun convertPlotY(plotY: Float, rect: Rect) =
+	rect.bottom - (plotY - PlotState.y0) / (PlotState.y1 - PlotState.y0) * (rect.bottom - rect.top)
 
-fun convertScreenY(screenY: Float, rect: Rect) =
-	State.y1 - (screenY - rect.top) / (rect.bottom - rect.top) * (State.y1 - State.y0)
+private fun convertScreenX(screenX: Float, rect: Rect) =
+	PlotState.x0 + (screenX - rect.left) / (rect.right - rect.left) * (PlotState.x1 - PlotState.x0)
+
+private fun convertScreenY(screenY: Float, rect: Rect) =
+	PlotState.y1 - (screenY - rect.top) / (rect.bottom - rect.top) * (PlotState.y1 - PlotState.y0)
 
 
 /**
  * This function works when user change window size. Task of it function is to
- * change State.x0/x1/y0/y1. Firstly, it assigned these parameters as min and max of values.
+ * change PlotState.x0/x1/y0/y1. Firstly, it assigned these parameters as min and max of values.
  * Then function stretches visible space so that cell grid is square.
  */
 private fun updateField(content: List<PlotCell>, rect: Rect) {
-	if (rect.right - rect.left != State.lastWidth || rect.bottom - rect.top != State.lastHeight) {
-		State.x0 = content.minOf { it.x } - 1
-		State.x1 = content.maxOf { it.x } + 1
-		State.y0 = content.minOf { it.y } - 1
-		State.y1 = content.maxOf { it.y } + 1
+	if (rect.right - rect.left != PlotState.lastWidth || rect.bottom - rect.top != PlotState.lastHeight) {
+		PlotState.x0 = content.minOf { it.x } - 1
+		PlotState.x1 = content.maxOf { it.x } + 1
+		PlotState.y0 = content.minOf { it.y } - 1
+		PlotState.y1 = content.maxOf { it.y } + 1
 		// height / (bottom - left) should be equal width / (right - left)
-		val height = State.y1 - State.y0
-		val width = State.x1 - State.x0
+		val height = PlotState.y1 - PlotState.y0
+		val width = PlotState.x1 - PlotState.x0
 		when {
 			height / (rect.bottom - rect.left) < width / (rect.right - rect.left) -> {
 				val expectedHeight = width / (rect.right - rect.left) * (rect.bottom - rect.left)
-				State.y0 -= (expectedHeight - height) / 2
-				State.y1 + (expectedHeight - height) / 2
+				PlotState.y0 -= (expectedHeight - height) / 2
+				PlotState.y1 + (expectedHeight - height) / 2
 			}
 			else -> {
 				val expectedWidth = height / (rect.bottom - rect.top) * (rect.right - rect.left)
-				State.x0 -= (expectedWidth - width) / 2
-				State.x1 += (expectedWidth - width) / 2
+				PlotState.x0 -= (expectedWidth - width) / 2
+				PlotState.x1 += (expectedWidth - width) / 2
 			}
 		}
-		State.lastWidth = rect.right - rect.left
-		State.lastHeight = rect.bottom - rect.top
+		PlotState.lastWidth = rect.right - rect.left
+		PlotState.lastHeight = rect.bottom - rect.top
 	}
 }
 
 /**
- * MyMouseMotionAdapter change State.vectorToMove when mouse is dragged.
+ * MyMouseMotionAdapter change PlotState.vectorToMove when mouse is dragged.
  * This function process this changes.
  * */
 private fun moveByMouse(rect: Rect) {
-	val deltaX = -State.vectorToMoveX / (rect.right - rect.left) * (State.x1 - State.x0)
-	val deltaY = State.vectorToMoveY / (rect.bottom - rect.top) * (State.y1 - State.y0)
+	val deltaX = -State.vectorToMoveX / (rect.right - rect.left) * (PlotState.x1 - PlotState.x0)
+	val deltaY = State.vectorToMoveY / (rect.bottom - rect.top) * (PlotState.y1 - PlotState.y0)
 	State.vectorToMoveX = 0f
 	State.vectorToMoveY = 0f
-	State.x0 += deltaX
-	State.y0 += deltaY
-	State.x1 += deltaX
-	State.y1 += deltaY
+	PlotState.x0 += deltaX
+	PlotState.y0 += deltaY
+	PlotState.x1 += deltaX
+	PlotState.y1 += deltaY
 }
 
 fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
@@ -75,7 +88,7 @@ fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 	processWheelRotation(rect)
 	processPressedKey()
 	val screenStep = 100f
-	val plotStep = getNearestRoundNumber(screenStep / (rect.right - rect.left) * (State.x1 - State.x0))
+	val plotStep = getNearestRoundNumber(screenStep / (rect.right - rect.left) * (PlotState.x1 - PlotState.x0))
 	drawGrid(canvas, plotStep, rect)
 	drawCoordinateAxes(rect, canvas)
 	drawSegments(canvas, content, rect)
@@ -93,23 +106,23 @@ private fun processPressedKey() {
  * Move visible space if user pres corresponding key.
  */
 private fun precessKeyCode(code: Int) {
-	val step = (State.x1 - State.x0) / 30f
+	val step = (PlotState.x1 - PlotState.x0) / 30f
 	when (code) {
 		37 -> {
-			State.x0 -= step
-			State.x1 -= step
+			PlotState.x0 -= step
+			PlotState.x1 -= step
 		}
 		38 -> {
-			State.y0 += step
-			State.y1 += step
+			PlotState.y0 += step
+			PlotState.y1 += step
 		}
 		39 -> {
-			State.x0 += step
-			State.x1 += step
+			PlotState.x0 += step
+			PlotState.x1 += step
 		}
 		40 -> {
-			State.y0 -= step
-			State.y1 -= step
+			PlotState.y0 -= step
+			PlotState.y1 -= step
 		}
 	}
 }
@@ -129,10 +142,10 @@ private fun changeZoom(preciseWheelRotation: Float, rect: Rect) {
 	val y = convertScreenY(State.mouseY, rect)
 	val zoomFactor = 0.95f
 	val currentFactor = if (preciseWheelRotation == 1f) zoomFactor else 1f / zoomFactor
-	State.x1 = x + (State.x1 - x) * currentFactor
-	State.y1 = y + (State.y1 - y) * currentFactor
-	State.x0 = x - (x - State.x0) * currentFactor
-	State.y0 = y - (y - State.y0) * currentFactor
+	PlotState.x1 = x + (PlotState.x1 - x) * currentFactor
+	PlotState.y1 = y + (PlotState.y1 - y) * currentFactor
+	PlotState.x0 = x - (x - PlotState.x0) * currentFactor
+	PlotState.y0 = y - (y - PlotState.y0) * currentFactor
 }
 
 
@@ -166,7 +179,7 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 	}
 
 	val radius = 5f
-	content.filter { it.x in State.x0..State.x1 && it.y in State.y0..State.y1 }.forEach {
+	content.filter { it.x in PlotState.x0..PlotState.x1 && it.y in PlotState.y0..PlotState.y1 }.forEach {
 		val x = convertPlotX(it.x, rect)
 		val y = convertPlotY(it.y, rect)
 		canvas.drawCircle(x, y, radius, randomColor(it.x * it.y))
@@ -181,46 +194,46 @@ private fun drawPoints(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
 private fun drawGrid(canvas: Canvas, step: Float, rect: Rect) {
 	drawVerticallyGrid(canvas, rect, step)
 	drawHorizontallyGrid(canvas, step, rect)
-	if (0f in State.x0..State.x1 && 0f in State.y0..State.y1)
+	if (0f in PlotState.x0..PlotState.x1 && 0f in PlotState.y0..PlotState.y1)
 		canvas.drawString("0", convertPlotX(0f, rect), convertPlotY(0f, rect) - 1f, thinFont, paint)
 }
 
 private fun drawHorizontallyGrid(canvas: Canvas, step: Float, rect: Rect) {
-	val startY = ceil(State.y0 / step).toInt()
-	val finishY = floor(State.y1 / step).toInt()
+	val startY = ceil(PlotState.y0 / step).toInt()
+	val finishY = floor(PlotState.y1 / step).toInt()
 	for (horizontal in (startY..finishY) - 0) {
 		val screenY = convertPlotY(horizontal * step, rect)
 		canvas.drawLine(rect.left, screenY, rect.right, screenY, thinStroke)
 		val inscription = (step * horizontal).toString()
 		when {
-			0 < State.x0 -> canvas.drawString(inscription, rect.left, screenY, thinFont, paint)
-			0 > State.x1 -> drawByRightSide(canvas, inscription, rect.right, screenY, font, paint)
+			0 < PlotState.x0 -> canvas.drawString(inscription, rect.left, screenY, thinFont, paint)
+			0 > PlotState.x1 -> drawByRightSide(canvas, inscription, rect.right, screenY, font, paint)
 			else -> canvas.drawString(inscription, convertPlotX(0f, rect) + 1f, screenY, thinFont, paint)
 		}
 	}
 }
 
 private fun drawVerticallyGrid(canvas: Canvas, rect: Rect, step: Float) {
-	val startX = ceil(State.x0 / step).toInt()
-	val finishX = floor(State.x1 / step).toInt()
+	val startX = ceil(PlotState.x0 / step).toInt()
+	val finishX = floor(PlotState.x1 / step).toInt()
 	for (vertical in (startX..finishX) - 0) {
 		val screenX = convertPlotX(step * vertical, rect)
 		canvas.drawLine(screenX, rect.top, screenX, rect.bottom, thinStroke)
 		val inscription = (step * vertical).toString()
 		when {
-			0 < State.y0 -> canvas.drawString(inscription, screenX, rect.bottom, thinFont, paint)
-			0 > State.y1 -> canvas.drawString(inscription, screenX, rect.top + thinFont.size, thinFont, paint)
+			0 < PlotState.y0 -> canvas.drawString(inscription, screenX, rect.bottom, thinFont, paint)
+			0 > PlotState.y1 -> canvas.drawString(inscription, screenX, rect.top + thinFont.size, thinFont, paint)
 			else -> canvas.drawString(inscription, screenX, convertPlotY(0f, rect) - 1f, thinFont, paint)
 		}
 	}
 }
 
 private fun drawCoordinateAxes(rect: Rect, canvas: Canvas) {
-	if (0f in State.x0..State.x1) {
+	if (0f in PlotState.x0..PlotState.x1) {
 		val centerX = convertPlotX(0f, rect)
 		drawArrow(canvas, centerX, rect.bottom, centerX, rect.top)
 	}
-	if (0f in State.y0..State.y1) {
+	if (0f in PlotState.y0..PlotState.y1) {
 		val centerY = convertPlotY(0f, rect)
 		drawArrow(canvas, rect.left, centerY, rect.right, centerY)
 	}

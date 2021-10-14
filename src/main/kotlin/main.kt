@@ -131,16 +131,11 @@ class Renderer(
 }
 
 object State {
-	var lastHeight = 0f
-	var lastWidth = 0f
-	var x0 = -10f
-	var y0 = -10f
-	var x1 = 10f
-	var y1 = 10f
 	var mouseX = 0f
 	var mouseY = 0f
 	var e: MouseWheelEvent? = null
 	var pressedKeyCode: Int? = null
+	// variables below are used for moving plot (see MyMouseMotionAdapter)
 	var vectorToMoveX = 0f
 	var vectorToMoveY = 0f
 	var lastDraggedX: Float? = null
