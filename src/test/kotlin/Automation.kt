@@ -2,23 +2,38 @@ import kotlin.test.*
 
 internal class Automation {
 
+    private fun write(args: Array<String>) {
+        val commandLine = processCommandLine(args)
+        if (commandLine == null) {
+            assert(false)
+            return
+        }
+        val cont = getContentFromFile(commandLine)
+        if (cont == null) {
+            assert(false)
+            return
+        }
+        val (type, content) = cont
+        writeToFile(commandLine.outputFile, type, content)
+    }
+
     @Test
     fun testPlot() {
-        main(arrayOf("plot", "tests/Plot/input.txt", "tests/Plot/output.png"))
+        write(arrayOf("plot", "tests/Plot/input.txt", "tests/Plot/output.png"))
     }
 
     @Test
     fun testBarChart() {
-        main(arrayOf("barChart", "tests/BarChart/input.txt", "tests/BarChart/output.png"))
+        write(arrayOf("barChart", "tests/BarChart/input.txt", "tests/BarChart/output.png"))
     }
 
     @Test
     fun testCircle() {
-        main(arrayOf("circle", "tests/Circle/input.txt", "tests/Circle/output.png"))
+        write(arrayOf("circle", "tests/Circle/input.txt", "tests/Circle/output.png"))
     }
 
     @Test
     fun testPolar() {
-        main(arrayOf("polar", "tests/polar/input.txt", "tests/polar/output.png"))
+        write(arrayOf("polar", "tests/polar/input.txt", "tests/polar/output.png"))
     }
 }
