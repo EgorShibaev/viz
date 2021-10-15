@@ -9,10 +9,14 @@ import kotlin.test.*
  * goals it is ok).
  * If programmer want to change interface, he should
  * change interface, run printCurrentHash function and change
- * expectedHash variable.
+ * expectedHashes variable.
  * Function printCurrentHash is framed as Test because it
  * will be easier for programmer who want to change interface
  * run this function.
+ *
+ * For different operating system there are different hashes.
+ * Now hashes for Windows and Linux are added.
+ * First hash is for Windows second for linux
  */
 fun getImageHash(type: Diagram, content: List<Cell>): Int {
 	val w = 1500
@@ -53,7 +57,7 @@ val plotContent = listOf(
 
 class CheckBarChartImageNotChanged {
 
-	private val expectedHash = 20286
+	private val expectedHashes = mapOf(20286 to "windows", -21864 to "linux")
 	private val type = Diagram.BAR_CHART
 
 	@Test
@@ -63,13 +67,13 @@ class CheckBarChartImageNotChanged {
 
 	@Test
 	fun testHashNotChange() {
-		assertEquals(expectedHash, getImageHash(type, otherContent))
+		assertContains(expectedHashes, getImageHash(type, otherContent))
 	}
 }
 
 class CheckPolarImageNotChanged {
 
-	private val expectedHash = -57857
+	private val expectedHashes = mapOf(-57857 to "windows", -52739 to "linux")
 	private val type = Diagram.POLAR_CHART
 
 	@Test
@@ -79,13 +83,13 @@ class CheckPolarImageNotChanged {
 
 	@Test
 	fun testHashNotChange() {
-		assertEquals(expectedHash, getImageHash(type, otherContent))
+		assertContains(expectedHashes, getImageHash(type, otherContent))
 	}
 }
 
 class CheckCircleImageNotChanged {
 
-	private val expectedHash = -33841
+	private val expectedHashes = mapOf(-33841 to "windows", -16485 to "linux")
 	private val type = Diagram.CIRCLE
 
 	@Test
@@ -95,13 +99,13 @@ class CheckCircleImageNotChanged {
 
 	@Test
 	fun testHashNotChange() {
-		assertEquals(expectedHash, getImageHash(type, otherContent))
+		assertContains(expectedHashes, getImageHash(type, otherContent))
 	}
 }
 
 class CheckPlotImageNotChanged {
 
-	private val expectedHash = -17283
+	private val expectedHashes = mapOf(-17283 to "windows", -12826 to "linux")
 	private val type = Diagram.PLOT
 
 	@Test
@@ -111,6 +115,6 @@ class CheckPlotImageNotChanged {
 
 	@Test
 	fun testHashNotChange() {
-		assertEquals(expectedHash, getImageHash(type, plotContent))
+		assertContains(expectedHashes, getImageHash(type, plotContent))
 	}
 }
