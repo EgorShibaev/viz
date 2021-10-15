@@ -1,7 +1,5 @@
-import org.jetbrains.skija.Image
-import org.jetbrains.skija.Paint
-import org.jetbrains.skija.Rect
-import org.jetbrains.skija.Surface
+import diagram.PlotState
+import org.jetbrains.skija.*
 import kotlin.test.*
 
 /**
@@ -11,7 +9,10 @@ import kotlin.test.*
  * goals it is ok).
  * If programmer want to change interface, he should
  * change interface, run printCurrentHash function and change
- * expectedHash variable
+ * expectedHash variable.
+ * Function printCurrentHash is framed as Test because it
+ * will be easier for programmer who want to change interface
+ * run this function.
  */
 fun getImageHash(type: Diagram, content: List<Cell>): Int {
 	val w = 1500
@@ -19,13 +20,17 @@ fun getImageHash(type: Diagram, content: List<Cell>): Int {
 	val surface = Surface.makeRasterN32Premul(w, h)
 	val canvas = surface.canvas
 	canvas.drawRect(Rect(0f, 0f, w.toFloat(), h.toFloat()), Paint().apply { color = 0xFFFFFFFF.toInt() })
+	if (type == Diagram.PLOT)
+		PlotState.apply {
+			x0 = 0f
+			y0 = 0f
+			x1 = 0f
+			y1 = 0f
+			lastHeight = 0f
+			lastWidth = 0f
+		}
 	drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
 	val image: Image = surface.makeImageSnapshot()
-	val buffer = image.peekPixels()
-	if (buffer == null) {
-		assert(false)
-		return 0
-	}
 	val a = image.encodeToData()?.bytes
 	return a?.sum() ?: 0
 }
@@ -36,6 +41,14 @@ val otherContent = listOf(
 	ChartCell(312f, "name3", "info3"),
 	ChartCell(21f, "name4", "info4"),
 	ChartCell(3f, "name5", "info5"),
+)
+
+val plotContent = listOf(
+	PlotCell(1f, 1f, "name1", "info"),
+	PlotCell(1f, 12f, "name1", "info"),
+	PlotCell(13f, 1f, "name1", "info"),
+	PlotCell(-1f, 1f, "name1", "info"),
+	PlotCell(1f, -1f, "name1", "info"),
 )
 
 class CheckBarChartImageNotChanged {
@@ -83,5 +96,21 @@ class CheckCircleImageNotChanged {
 	@Test
 	fun testHashNotChange() {
 		assertEquals(expectedHash, getImageHash(type, otherContent))
+	}
+}
+
+class CheckPlotImageNotChanged {
+
+	private val expectedHash = -17283
+	private val type = Diagram.PLOT
+
+	@Test
+	fun printCurrentHash() {
+		logger.info { "Current hash of image of $type diagram - ${getImageHash(type, plotContent)}" }
+	}
+
+	@Test
+	fun testHashNotChange() {
+		assertEquals(expectedHash, getImageHash(type, plotContent))
 	}
 }

@@ -14,7 +14,7 @@ import kotlin.math.*
  * This object contains State of field: x0, y0, x1, y1 : coordinates of visible space
  * lastHeight, lastWidth - size of window in previous rendering
  */
-private object PlotState {
+object PlotState {
 	var lastHeight = 0f
 	var lastWidth = 0f
 	var x0 = -10f
