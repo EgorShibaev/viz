@@ -25,6 +25,7 @@ val logger = KotlinLogging.logger {}
 * barChart tests/BarChart/input.txt tests/BarChart/output.png
 * Circle tests/Circle/input.txt tests/Circle/output.png
 * Polar tests/Polar/input.txt tests/Polar/output.png
+* tree tests/Tree/input.txt tests/Tree/output.png
 * */
 
 fun main(args: Array<String>) {
@@ -54,8 +55,11 @@ data class PlotCell(val x: Float, val y: Float, override val name: String, overr
 data class ChartCell(val value: Float, override val name: String, override val detailedInfo: String) :
 	Cell(name, detailedInfo)
 
+data class TreeCell(val children: List<TreeCell>, override val name: String, override val detailedInfo: String) :
+	Cell(name, detailedInfo)
+
 enum class Diagram {
-	CIRCLE, BAR_CHART, PLOT, POLAR_CHART
+	CIRCLE, BAR_CHART, PLOT, POLAR_CHART, TREE
 }
 
 fun writeToFile(outputFile: String, type: Diagram, content: List<Cell>) {

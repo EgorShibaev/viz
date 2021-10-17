@@ -1,7 +1,4 @@
-import diagram.barChart
-import diagram.separatedCircle
-import diagram.plot
-import diagram.polarChart
+import diagram.*
 import fontsAndPaints.paint
 import org.jetbrains.skija.*
 import kotlin.math.max
@@ -81,11 +78,19 @@ fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h:
 			canvas, w / 2, h / 2, min(w / 2F, h / 2F) - 50F,
 			content.map { it as ChartCell }
 		)
+		Diagram.TREE -> tree(
+			canvas, Rect(w / 100, h / 15, w - 10f, h - 40f),
+			content[0] as TreeCell
+		)
 	}
 }
 
 fun checkIsContentCorrect(type: Diagram, content: List<Cell>) {
 	when (type) {
+		Diagram.TREE -> {
+			assert(content.all { it is TreeCell })
+			assert(content.size == 1)
+		}
 		Diagram.PLOT -> assert(content.all { it is PlotCell })
 		Diagram.CIRCLE, Diagram.BAR_CHART, Diagram.POLAR_CHART -> assert(content.all { it is ChartCell })
 	}

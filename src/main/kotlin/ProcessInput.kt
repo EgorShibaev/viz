@@ -2,11 +2,13 @@ import java.io.File
 
 fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {
 	val content = readInputFile(commandLine.inputFile) ?: return null
+	val processedContent = content.map { getCell(commandLine.type, it) ?: return null }
 	return Pair(
 		commandLine.type,
-		content.map {
-			getCell(commandLine.type, it) ?: return null
-		}
+		if (commandLine.type == Diagram.TREE)
+			transformTreeCells(processedContent.map { it as TreeCell }) ?: return null
+		else
+			processedContent
 	)
 }
 
@@ -19,6 +21,7 @@ fun processCommandLine(args: Array<String>): CommandLine? {
 		return null
 	}
 	val type = when (args[0].lowercase()) {
+		"tree" -> Diagram.TREE
 		"circle", "circlediagram" -> Diagram.CIRCLE
 		"barchart", "bar_chart" -> Diagram.BAR_CHART
 		"plot" -> Diagram.PLOT
@@ -37,7 +40,7 @@ fun processCommandLine(args: Array<String>): CommandLine? {
 
 fun getChartCell(line: List<String>): ChartCell? = when {
 	line.size != 3 -> {
-		logger.error {"3 arguments expected" }
+		logger.error { "3 arguments expected" }
 		null
 	}
 	line[1].toFloatOrNull() == null -> {
@@ -59,9 +62,36 @@ fun getPlotCell(line: List<String>): PlotCell? = when {
 	else -> PlotCell(line[0].toFloat(), line[1].toFloat(), line[2], line[3])
 }
 
+fun getTreeCell(line: List<String>): TreeCell? = when {
+	line.size < 2 -> {
+		logger.error { "At least 2 arguments expected is line: $line" }
+		null
+	}
+	else -> TreeCell(
+		line.subList(2, line.size).map { name ->
+			TreeCell(emptyList(), name, "")
+		}, line[0], line[1]
+	)
+}
+
 fun getCell(type: Diagram, line: List<String>) = when (type) {
 	Diagram.CIRCLE, Diagram.BAR_CHART, Diagram.POLAR_CHART -> getChartCell(line)
 	Diagram.PLOT -> getPlotCell(line)
+	Diagram.TREE -> getTreeCell(line)
+}
+
+fun transformTreeCells(cells: List<TreeCell>): List<TreeCell>? {
+	if (cells.isEmpty())
+		return emptyList()
+	val roots = cells.filter { node -> cells.all { it.children.all { child -> child.name != node.name } } }
+	if (roots.isEmpty()) {
+		logger.error { "content must me tree" }
+		return null
+	}
+	val below = transformTreeCells(cells.filter { roots.all { node -> node.name != it.name } }) ?: return null
+	return roots.map {
+		TreeCell(it.children.map { below.find { node -> node.name == it.name }!! }, it.name, it.detailedInfo)
+	}
 }
 
 fun readInputFile(inputFile: String): List<List<String>>? {
