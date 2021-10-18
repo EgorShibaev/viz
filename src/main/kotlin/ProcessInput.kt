@@ -1,4 +1,3 @@
-import diagram.tree
 import java.io.File
 
 fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {

@@ -55,6 +55,8 @@ val plotContent = listOf(
 	PlotCell(1f, -1f, "name1", "info"),
 )
 
+val treeRoot = TreeCell(listOf(TreeCell(emptyList(), "1"), TreeCell(emptyList(), "2")), "3")
+
 class CheckBarChartImageNotChanged {
 
 	private val expectedHashes = mapOf(20286 to "windows", -21864 to "linux")
@@ -116,5 +118,22 @@ class CheckPlotImageNotChanged {
 	@Test
 	fun testHashNotChange() {
 		assertContains(expectedHashes, getImageHash(type, plotContent))
+	}
+}
+
+class CheckTreeImageNotChanged {
+
+	// not set for Linux
+	private val expectedHashes = mapOf(-29902 to "windows", -1 to "linux")
+	private val type = Diagram.TREE
+
+	@Test
+	fun printCurrentHash() {
+		logger.info { "Current hash of image of $type diagram - ${getImageHash(type, listOf(treeRoot))}" }
+	}
+
+	@Test
+	fun testHashNotChange() {
+		assertContains(expectedHashes, getImageHash(type, listOf(treeRoot)))
 	}
 }

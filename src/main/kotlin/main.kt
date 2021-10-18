@@ -38,8 +38,7 @@ fun main(args: Array<String>) {
 
 /**
  * These classes contain info of each cell: name and detailedInfo for each
- * cell, coordinates for PlotCell and value for ChartCell.
- * PlotCell is used for plot. And ChartCell for others.
+ * cell, coordinates for PlotCell, value for ChartCell and children for TreeCell.
  * */
 open class Cell(open val name: String, open val detailedInfo: String)
 
@@ -55,6 +54,7 @@ data class PlotCell(val x: Float, val y: Float, override val name: String, overr
 data class ChartCell(val value: Float, override val name: String, override val detailedInfo: String) :
 	Cell(name, detailedInfo)
 
+// Suppose that cell contains all nodes in subtree
 data class TreeCell(val children: List<TreeCell>, override val name: String, override val detailedInfo: String = "") :
 	Cell(name, detailedInfo)
 

@@ -19,6 +19,11 @@ data class ScreenPoint(
 	val paint: Paint, val parentX: Float?, val parentY: Float?
 )
 
+/**
+ * This function draw points of tree and segments between them.
+ * There are four loops instead one because segments shouldn't overlap text and point,
+ * points and segments shouldn't overlap detailed info.
+ */
 fun drawPoints(canvas: Canvas, rect: Rect, points: List<ScreenPoint>) {
 	val radius = 5f
 	points.forEach {
@@ -48,6 +53,11 @@ fun getDepth(node: TreeCell): Int = (node.children.maxOfOrNull { getDepth(it) } 
 
 fun childrenCount(node: TreeCell): Int = node.children.sumOf { childrenCount(it) } + 1
 
+/**
+ * This function fix root node in center of top of rectangle
+ * For each child program allocate space that proportionately count of nodes in its subtree
+ * Then program call this function for each child.
+ */
 fun getPoints(rect: Rect, root: TreeCell, parentX: Float?, parentY: Float?, depth: Int): List<ScreenPoint> {
 	val levelHeight = rect.height / (depth - 1)
 	val x = (rect.left + rect.right) / 2

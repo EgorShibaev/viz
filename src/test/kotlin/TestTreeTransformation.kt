@@ -95,7 +95,7 @@ class TestTreeTransformation {
 	fun testRandomTree() {
 		val testCount = 10
 		repeat(testCount) {
-			val randomTree = generateRandomTree(3)
+			val randomTree = generateRandomTree(7)
 			val listOfNodes = getListOfNodes(randomTree)
 			assertEquals(randomTree, transformTreeCells(listOfNodes)!![0])
 		}
