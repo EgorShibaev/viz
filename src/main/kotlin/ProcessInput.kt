@@ -83,12 +83,24 @@ fun getCell(type: Diagram, line: List<String>) = when (type) {
 fun transformTreeCells(cells: List<TreeCell>): List<TreeCell>? {
 	if (cells.isEmpty())
 		return emptyList()
+	// all nodes that aren't children og an node
 	val roots = cells.filter { node -> cells.all { it.children.all { child -> child.name != node.name } } }
 	if (roots.isEmpty()) {
 		logger.error { "content must me tree" }
 		return null
 	}
+	// { all } \ { roots }
 	val below = transformTreeCells(cells.filter { roots.all { node -> node.name != it.name } }) ?: return null
+	// if some nodes don't have parent or have two parents
+	if (below.any { node -> roots.count { root -> root.children.any { child -> child.name == node.name } } != 1 }) {
+		logger.error { "content must me tree" }
+		return null
+	}
+	// if some root does not have children
+	if (roots.any {root -> root.children.any { child -> below.all { it.name != child.name } }}) {
+		logger.error { "content must me tree" }
+		return null
+	}
 	return roots.map {
 		TreeCell(it.children.map { below.find { node -> node.name == it.name }!! }, it.name, it.detailedInfo)
 	}
