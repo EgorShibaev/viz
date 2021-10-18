@@ -1,12 +1,20 @@
+import diagram.tree
 import java.io.File
 
 fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {
 	val content = readInputFile(commandLine.inputFile) ?: return null
-	val processedContent = content.map { getCell(commandLine.type, it) ?: return null }
+	var processedContent = content.map { getCell(commandLine.type, it) ?: return null }
+	if (commandLine.type == Diagram.TREE) {
+		processedContent = transformTreeCells(processedContent.map { it as TreeCell }) ?: return null
+		if (processedContent.size != 1) {
+			logger.error { "Tree expected" }
+			return null
+		}
+	}
 	return Pair(
 		commandLine.type,
 		if (commandLine.type == Diagram.TREE)
-			transformTreeCells(processedContent.map { it as TreeCell }) ?: return null
+			processedContent
 		else
 			processedContent
 	)
@@ -80,7 +88,13 @@ fun getCell(type: Diagram, line: List<String>) = when (type) {
 	Diagram.TREE -> getTreeCell(line)
 }
 
+fun haveDuplicates(strings: List<String>) = strings.map { it.hashCode() }.sorted().windowed(2).any { it[0] == it[1] }
+
 fun transformTreeCells(cells: List<TreeCell>): List<TreeCell>? {
+	if (haveDuplicates(cells.map { it.name })) {
+		logger.error { "Name must be different" }
+		return null
+	}
 	if (cells.isEmpty())
 		return emptyList()
 	// all nodes that aren't children og an node
@@ -97,7 +111,7 @@ fun transformTreeCells(cells: List<TreeCell>): List<TreeCell>? {
 		return null
 	}
 	// if some root does not have children
-	if (roots.any {root -> root.children.any { child -> below.all { it.name != child.name } }}) {
+	if (roots.any { root -> root.children.any { child -> below.all { it.name != child.name } } }) {
 		logger.error { "content must me tree" }
 		return null
 	}

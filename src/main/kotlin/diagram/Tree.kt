@@ -3,10 +3,7 @@ package diagram
 import TreeCell
 import distance
 import drawStringInRect
-import fontsAndPaints.font
-import fontsAndPaints.paint
-import fontsAndPaints.randomColor
-import fontsAndPaints.stroke
+import fontsAndPaints.*
 import org.jetbrains.skija.Canvas
 import org.jetbrains.skija.Paint
 import org.jetbrains.skija.PaintMode
@@ -26,7 +23,7 @@ fun drawPoints(canvas: Canvas, rect: Rect, points: List<ScreenPoint>) {
 	val radius = 5f
 	points.forEach {
 		if (it.parentX != null && it.parentY != null)
-			canvas.drawLine(it.x, it.y, it.parentX, it.parentY, stroke)
+			canvas.drawLine(it.x, it.y, it.parentX, it.parentY, thinStroke)
 	}
 	points.forEach {
 		canvas.drawCircle(it.x, it.y, radius, it.paint)

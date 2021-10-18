@@ -55,7 +55,7 @@ data class PlotCell(val x: Float, val y: Float, override val name: String, overr
 data class ChartCell(val value: Float, override val name: String, override val detailedInfo: String) :
 	Cell(name, detailedInfo)
 
-data class TreeCell(val children: List<TreeCell>, override val name: String, override val detailedInfo: String) :
+data class TreeCell(val children: List<TreeCell>, override val name: String, override val detailedInfo: String = "") :
 	Cell(name, detailedInfo)
 
 enum class Diagram {
