@@ -12,10 +12,7 @@ fun getContentFromFile(commandLine: CommandLine): Pair<Diagram, List<Cell>>? {
 	}
 	return Pair(
 		commandLine.type,
-		if (commandLine.type == Diagram.TREE)
-			processedContent
-		else
-			processedContent
+		processedContent
 	)
 }
 
@@ -89,14 +86,28 @@ fun getCell(type: Diagram, line: List<String>) = when (type) {
 
 fun haveDuplicates(strings: List<String>) = strings.map { it.hashCode() }.sorted().windowed(2).any { it[0] == it[1] }
 
+fun checkTreeValidity(roots: List<TreeCell>, below: List<TreeCell>): Boolean {
+	// every node below must have only one parent.
+	// every root must have all children in node below
+	return below.all { node -> roots.count { root -> root.children.any { child -> child.name == node.name } } == 1 } &&
+			roots.all { root -> root.children.all { child -> below.any { it.name == child.name } } }
+}
+
+
+/**
+ * This function take cells in initial form: Every node contain only name of its children.
+ * This function find all nodes that aren't children of any node and suppose that these
+ * nodes are roots of trees. Then function call itself for every other node.
+ * Finally, function replace names of children with directly children.
+ */
 fun transformTreeCells(cells: List<TreeCell>): List<TreeCell>? {
 	if (haveDuplicates(cells.map { it.name })) {
-		logger.error { "Name must be different" }
+		logger.error { "Names must be different" }
 		return null
 	}
 	if (cells.isEmpty())
 		return emptyList()
-	// all nodes that aren't children og an node
+	// all nodes that aren't children of any node
 	val roots = cells.filter { node -> cells.all { it.children.all { child -> child.name != node.name } } }
 	if (roots.isEmpty()) {
 		logger.error { "content must me tree" }
@@ -104,14 +115,8 @@ fun transformTreeCells(cells: List<TreeCell>): List<TreeCell>? {
 	}
 	// { all } \ { roots }
 	val below = transformTreeCells(cells.filter { roots.all { node -> node.name != it.name } }) ?: return null
-	// if some nodes don't have parent or have two parents
-	if (below.any { node -> roots.count { root -> root.children.any { child -> child.name == node.name } } != 1 }) {
-		logger.error { "content must me tree" }
-		return null
-	}
-	// if some root does not have children
-	if (roots.any { root -> root.children.any { child -> below.all { it.name != child.name } } }) {
-		logger.error { "content must me tree" }
+	if (!checkTreeValidity(roots, below)) {
+		logger.error { "content must be tree" }
 		return null
 	}
 	return roots.map {

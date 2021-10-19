@@ -88,6 +88,7 @@ fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h:
 fun checkIsContentCorrect(type: Diagram, content: List<Cell>) {
 	when (type) {
 		Diagram.TREE -> {
+			// For tree suppose that content contain only one node - root of all tree.
 			assert(content.all { it is TreeCell })
 			assert(content.size == 1)
 		}
