@@ -123,8 +123,7 @@ class CheckPlotImageNotChanged {
 
 class CheckTreeImageNotChanged {
 
-	// not set for Linux
-	private val expectedHashes = mapOf(-29902 to "windows", -1 to "linux")
+	private val expectedHashes = mapOf(-29902 to "windows", -3988 to "linux")
 	private val type = Diagram.TREE
 
 	@Test
