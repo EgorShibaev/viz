@@ -10,6 +10,7 @@ import org.jetbrains.skija.PaintMode
 import org.jetbrains.skija.Rect
 
 fun tree(canvas: Canvas, rect: Rect, root: TreeCell) {
+	font = getFont(rect.width)
 	val points = getPoints(rect, root, null, null, getDepth(root))
 	drawPoints(canvas, rect, points)
 }

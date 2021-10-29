@@ -10,6 +10,7 @@ import org.jetbrains.skija.Rect
 
 fun barChart(canvas: Canvas, rect: Rect, content: List<ChartCell>) {
 	assert(content.all { it.value >= 0 })
+	font = getFont(rect.width)
 	val max = getRoundNumberMore(content.maxOf { it.value })
 	val leftIndent = 80f
 	// widthOfColumn * cnt + widthOfColumn / 2 * (cnt - 1) = width

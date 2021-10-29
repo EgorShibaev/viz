@@ -59,18 +59,19 @@ data class DiagramSegment(
 	}
 }
 
-fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, r: Float, content: List<ChartCell>) {
+fun separatedCircle(canvas: Canvas, centerX: Float, centerY: Float, radius: Float, content: List<ChartCell>) {
 	assert(content.all { it.value >= 0 })
-	val diagramSegments = getDiagramSegments(centerX, centerY, r, content)
+	font = getFont(radius * 2)
+	val diagramSegments = getDiagramSegments(centerX, centerY, radius, content)
 	diagramSegments.forEach {
 		it.draw(canvas)
-		lineInCircle(canvas, centerX, centerY, r, it.endAngle)
+		lineInCircle(canvas, centerX, centerY, radius, it.endAngle)
 	}
 	diagramSegments.forEach {
 		if (it.checkInSegment(State.mouseX, State.mouseY))
-			drawStringInRect(canvas, it.info, Rect(State.mouseX, State.mouseY + 10f, centerX + r, centerY + r), font)
+			drawStringInRect(canvas, it.info, Rect(State.mouseX, State.mouseY + 10f, centerX + radius, centerY + radius), font)
 	}
-	canvas.drawCircle(centerX, centerY, r, stroke)
+	canvas.drawCircle(centerX, centerY, radius, stroke)
 }
 
 /**

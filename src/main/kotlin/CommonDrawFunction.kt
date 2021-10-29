@@ -66,7 +66,7 @@ fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, width: Float
 	assert(content.isNotEmpty())
 	checkIsContentCorrect(type, content)
 	val horizontalIndent = 10f
-	val verticalIndent = 10f
+	val verticalIndent = 20f
 	val circleIndent = 50f
 
 	when (type) {

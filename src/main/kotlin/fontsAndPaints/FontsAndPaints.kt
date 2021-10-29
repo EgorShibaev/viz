@@ -4,7 +4,7 @@ import org.jetbrains.skija.Font
 import org.jetbrains.skija.Paint
 import org.jetbrains.skija.PaintMode
 import org.jetbrains.skija.Typeface
-import kotlin.math.ln
+import kotlin.math.min
 import kotlin.random.Random
 
 fun randomColor(seed: Float) = Paint().apply {
@@ -12,7 +12,7 @@ fun randomColor(seed: Float) = Paint().apply {
 }
 
 private val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
-val font = Font(typeface, 15f)
+var font = Font(typeface, 15f)
 val thinFont = Font(typeface, 12f)
 val paint = Paint().apply {
 	color = 0xff000000.toInt()
@@ -30,4 +30,10 @@ val thinStroke = Paint().apply {
 	color = 0x5F000000
 	mode = PaintMode.STROKE
 	strokeWidth = 0.5f
+}
+
+fun getFont(width: Float): Font {
+	val maxSize = 15f
+	val size = min(maxSize, maxSize * width / 500)
+	return Font(typeface, size)
 }

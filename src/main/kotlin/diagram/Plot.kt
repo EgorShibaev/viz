@@ -83,6 +83,7 @@ private fun moveByMouse(rect: Rect) {
 }
 
 fun plot(canvas: Canvas, rect: Rect, content: List<PlotCell>) {
+	font = getFont(rect.width)
 	moveByMouse(rect)
 	updateField(content, rect)
 	processWheelRotation(rect)
