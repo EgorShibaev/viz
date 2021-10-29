@@ -59,7 +59,7 @@ val treeRoot = TreeCell(listOf(TreeCell(emptyList(), "1"), TreeCell(emptyList(),
 
 class CheckBarChartImageNotChanged {
 
-	private val expectedHashes = mapOf(20286 to "windows", -21864 to "linux")
+	private val expectedHashes = mapOf(-21465 to "windows", -21864 to "linux")
 	private val type = Diagram.BAR_CHART
 
 	@Test
@@ -91,7 +91,7 @@ class CheckPolarImageNotChanged {
 
 class CheckCircleImageNotChanged {
 
-	private val expectedHashes = mapOf(-33841 to "windows", -16485 to "linux")
+	private val expectedHashes = mapOf(10133 to "windows", -16485 to "linux")
 	private val type = Diagram.CIRCLE
 
 	@Test
@@ -107,7 +107,7 @@ class CheckCircleImageNotChanged {
 
 class CheckPlotImageNotChanged {
 
-	private val expectedHashes = mapOf(-17283 to "windows", -12826 to "linux")
+	private val expectedHashes = mapOf(-27720 to "windows", -12826 to "linux")
 	private val type = Diagram.PLOT
 
 	@Test
@@ -123,7 +123,7 @@ class CheckPlotImageNotChanged {
 
 class CheckTreeImageNotChanged {
 
-	private val expectedHashes = mapOf(-29902 to "windows", -3988 to "linux")
+	private val expectedHashes = mapOf(2705 to "windows", -3988 to "linux")
 	private val type = Diagram.TREE
 
 	@Test
