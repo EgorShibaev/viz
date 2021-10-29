@@ -6,7 +6,10 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-fun getTextWidth(text: String, font: Font) = text.length * font.size * 0.6f
+fun getTextWidth(text: String, font: Font): Float {
+	val relativeCharWidth = 0.6f
+	return text.length * font.size * relativeCharWidth
+}
 
 /** Draw text so that right side is fixed */
 fun drawByRightSide(canvas: Canvas, text: String, right: Float, y: Float, font: Font, paint: Paint) {
@@ -21,19 +24,21 @@ fun drawByRightSide(canvas: Canvas, text: String, right: Float, y: Float, font: 
  * Secondly, program call subfunction with flag true and draw string.
  * */
 fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
+	val horizontalIndent = 2f
+
 	fun drawStringOrCalcSize(shouldDraw: Boolean): Pair<Float, Float> {
 		var maxX = rect.left
 		var currX = rect.left
 		var currY = rect.top + font.size
 		val words = text.split(' ')
 		words.forEach {
-			if (currX + font.size * 0.6f * it.length > rect.right && currX != rect.left) {
+			if (currX + getTextWidth(it, font) > rect.right && currX != rect.left) {
 				currX = rect.left
-				currY += font.size + 2f
+				currY += font.size + horizontalIndent
 			}
 			if (shouldDraw)
 				canvas.drawString(it, currX, currY, font, paint)
-			currX += font.size * 0.6f * (it.length + 1)
+			currX += getTextWidth("$it ", font)
 			maxX = max(maxX, currX)
 		}
 		return Pair(currY, maxX)
@@ -41,10 +46,10 @@ fun drawStringInRect(canvas: Canvas, text: String, rect: Rect, font: Font) {
 
 	val (bottom, right) = drawStringOrCalcSize(false)
 	// fill and stroke
-	canvas.drawRect(Rect(rect.left, rect.top, right, bottom + 2f), Paint().apply {
+	canvas.drawRect(Rect(rect.left, rect.top, right, bottom + horizontalIndent), Paint().apply {
 		color = 0xcfcfcfff.toInt()
 	})
-	canvas.drawRect(Rect(rect.left, rect.top, right, bottom + 2f), Paint().apply {
+	canvas.drawRect(Rect(rect.left, rect.top, right, bottom + horizontalIndent), Paint().apply {
 		color = 0xff000000.toInt()
 		mode = PaintMode.STROKE
 	})
@@ -57,29 +62,32 @@ fun distance(x0: Float, y0: Float, x1: Float, y1: Float) = sqrt((x0 - x1).pow(2)
 /**
  * Check if content correct, cast to corresponding type and then call corresponding function
  * */
-fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, w: Float, h: Float) {
+fun drawDiagram(canvas: Canvas, type: Diagram, content: List<Cell>, width: Float, height: Float) {
 	assert(content.isNotEmpty())
 	checkIsContentCorrect(type, content)
+	val horizontalIndent = 10f
+	val verticalIndent = 10f
+	val circleIndent = 50f
 
 	when (type) {
 		Diagram.BAR_CHART -> barChart(
-			canvas, Rect(w / 100F, h / 100F, w - 10F, h - 10F),
+			canvas, Rect(horizontalIndent, verticalIndent, width - horizontalIndent, height - verticalIndent),
 			content.map { it as ChartCell }
 		)
 		Diagram.CIRCLE -> separatedCircle(
-			canvas, w / 2F, h / 2F, min(w / 2F, h / 2F) - 30F,
+			canvas, width / 2, height / 2, min(width / 2, height / 2) - circleIndent,
 			content.map { it as ChartCell }
 		)
 		Diagram.PLOT -> plot(
-			canvas, Rect(w / 100f, h / 100f, w - 10F, h - 10F),
+			canvas, Rect(horizontalIndent, verticalIndent, width - horizontalIndent, height - verticalIndent),
 			content.map { it as PlotCell }
 		)
 		Diagram.POLAR_CHART -> polarChart(
-			canvas, w / 2, h / 2, min(w / 2F, h / 2F) - 50F,
+			canvas, width / 2, height / 2, min(width / 2F, height / 2F) - circleIndent,
 			content.map { it as ChartCell }
 		)
 		Diagram.TREE -> tree(
-			canvas, Rect(w / 100, h / 15, w - 10f, h - 40f),
+			canvas, Rect(horizontalIndent, verticalIndent, width - horizontalIndent, height - verticalIndent),
 			content[0] as TreeCell
 		)
 	}

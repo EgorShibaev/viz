@@ -19,11 +19,11 @@ import kotlin.test.*
  * First hash is for Windows second for linux
  */
 fun getImageHash(type: Diagram, content: List<Cell>): Int {
-	val w = 1500
-	val h = 1000
-	val surface = Surface.makeRasterN32Premul(w, h)
+	val width = 1500
+	val height = 1000
+	val surface = Surface.makeRasterN32Premul(width, height)
 	val canvas = surface.canvas
-	canvas.drawRect(Rect(0f, 0f, w.toFloat(), h.toFloat()), Paint().apply { color = 0xFFFFFFFF.toInt() })
+	canvas.drawRect(Rect(0f, 0f, width.toFloat(), height.toFloat()), Paint().apply { color = 0xFFFFFFFF.toInt() })
 	if (type == Diagram.PLOT)
 		PlotState.apply {
 			x0 = 0f
@@ -33,7 +33,7 @@ fun getImageHash(type: Diagram, content: List<Cell>): Int {
 			lastHeight = 0f
 			lastWidth = 0f
 		}
-	drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
+	drawDiagram(canvas, type, content, width.toFloat(), height.toFloat())
 	val image: Image = surface.makeImageSnapshot()
 	val a = image.encodeToData()?.bytes
 	return a?.sum() ?: 0

@@ -63,12 +63,12 @@ enum class Diagram {
 }
 
 fun writeToFile(outputFile: String, type: Diagram, content: List<Cell>) {
-	val w = 1500
-	val h = 1000
-	val surface = Surface.makeRasterN32Premul(w, h)
+	val width = 1500
+	val height = 1000
+	val surface = Surface.makeRasterN32Premul(width, height)
 	val canvas = surface.canvas
-	canvas.drawRect(Rect(0f, 0f, w.toFloat(), h.toFloat()), Paint().apply { color = 0xffffffff.toInt() })
-	drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
+	canvas.drawRect(Rect(0f, 0f, width.toFloat(), height.toFloat()), Paint().apply { color = 0xffffffff.toInt() })
+	drawDiagram(canvas, type, content, width.toFloat(), height.toFloat())
 	val image: Image = surface.makeImageSnapshot()
 	val pngData = image.encodeToData(EncodedImageFormat.PNG)!!
 	val pngBytes = pngData.toByteBuffer()
@@ -110,7 +110,7 @@ fun createWindow(title: String, type: Diagram, content: List<Cell>) = runBlockin
 	window.layer.addMouseWheelListener(MyMouseWheelListener)
 	window.layer.addKeyListener(MyKeyAdapter)
 
-	window.preferredSize = Dimension(800, 600)
+	window.preferredSize = Dimension(1000, 600)
 	window.minimumSize = Dimension(100, 100)
 	window.pack()
 	window.layer.awaitRedraw()
@@ -125,10 +125,10 @@ class Renderer(
 	override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
 		val contentScale = layer.contentScale
 		canvas.scale(contentScale, contentScale)
-		val w = (width / contentScale).toInt()
-		val h = (height / contentScale).toInt()
+		val realWidth = width / contentScale
+		val realHeight = height / contentScale
 
-		drawDiagram(canvas, type, content, w.toFloat(), h.toFloat())
+		drawDiagram(canvas, type, content, realWidth, realHeight)
 
 		layer.needRedraw()
 	}
