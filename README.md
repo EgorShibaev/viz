@@ -37,6 +37,8 @@ program with this data.
 
 ### Plot
 
+Can be dragged and zoomed with mouse.
+
 ![image](https://user-images.githubusercontent.com/77232868/183286168-220a6650-39d4-48c4-88e3-b4d75b6fdf16.png)
 
 ### Polar diagram
